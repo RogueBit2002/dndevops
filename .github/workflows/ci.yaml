@@ -27,7 +27,7 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-25.05
       - name: Pre-process dev shell
-        run: nix build --no-link .#devShell.$(nix eval --impure --raw --expr 'builtins.currentSystem').default
+        run: nix build --no-link .#devShells.$(nix eval --impure --raw --expr 'builtins.currentSystem').default
       - name: Install dependencies
         run: nix develop . --command pnpm install
       - name: Run CI

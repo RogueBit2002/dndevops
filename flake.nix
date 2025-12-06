@@ -27,7 +27,7 @@
 			};
 		in "${der}/bin/app";
 	in {
-		devShell.${system} = pkgs.mkShell {
+		devShells.${system}.default = pkgs.mkShell {
 			name = "dndevops";
 			
 			inherit packages;
@@ -36,10 +36,6 @@
 				echo "Have fun developing! <3"
 			'';
         };
-
-		/*apps.${system}.shell = {
-
-		};*/
 
 		apps.${system}.check = {
 			type = "app";
