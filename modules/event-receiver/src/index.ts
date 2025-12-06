@@ -1,16 +1,15 @@
-export interface Functionality {
+import { Effect, Data, Context} from "effect";
 
-};
-
-export interface Dependencies {
-
-}
-
-export interface Configuration {
-
-}
+export class EventPublisher extends Context.Tag("EventPublisher")<
+    EventPublisher,
+    {
+        readonly publish: (applictation: string, content: string) => Effect.Effect<void>
+    }>() {};
 
 
-export default async function(config: Configuration, deps: Dependencies): Promise<Functionality> {
-    return {};
-}
+export const createReceiver = (applications: string[]) => (application: string, content: string) => Effect.gen(function*() {
+    console.log(`Received event for ${application}`);
+
+    const publisher = yield* EventPublisher;
+    publisher.publish(application, content);
+});

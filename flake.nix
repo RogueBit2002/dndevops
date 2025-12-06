@@ -9,10 +9,23 @@
 		system = "x86_64-linux";
 		pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
 		
-		packages = with pkgs; [
-			pnpm
-			nodejs_22
-		];
+		deps = {
+			pnpm = pkgs.pnpm;
+			node = pkgs.nodejs_22;
+		};
+
+		packages = builtins.attrValues deps;
+
+		mkScriptWithDeps = name: content: let
+			der = pkgs.stdenv.mkDerivation {
+				name = "dndevops-checker";
+
+				buildInputs = packages;
+				
+				src = pkgs.writeShellScriptBin "dndevops-checker-script" "pnpm -r run check"; # writeShellScriptBin emits a folder (bin)
+				installPhase = "mkdir -p $out/bin && cp bin/dndevops-checker-script $out/bin/app";
+			};
+		in "${der}/bin/app";
 	in {
 		devShell.${system} = pkgs.mkShell {
 			name = "dndevops";
@@ -24,34 +37,22 @@
 			'';
         };
 
-		/*packages.${system}.event-worker = pkgs.lib.dockerTools.buildImage {
-			name = "event-worker";
-			tag = "latest";
+		/*apps.${system}.shell = {
+
 		};*/
 
-/*
-		packages.${system} = let 
-			folders = builtins.readDir ./services;
-			projectFiles = builtins.filter (i: i != null ) builtins.map (i: if pathExists (i + ./package.json) then (i + ./package.json) else null) (builtins.attrNames folders);
-			projects = builtins.map (projectFile: 
-				let 
-					projectJSON = builtins.fromJSON (builtins.readFile projectFile);
-					name = builtins.split "/" projectJSON.name;
-				in { name = { path = projectFile + ./..; }; }
-			) projectFiles;
-		in
-			builtins.foldl' (acc: p: let
-			
-			in acc // { "${p.name}" =  pkgs.stdenv.mkDerivation {
-				inherit system;
+		apps.${system}.check = {
+			type = "app";
+			program = let
+				der = pkgs.stdenv.mkDerivation {
+					name = "dndevops-checker";
 
-				pname = p.name;
-				src = ./.;
-
-				buildInputs = packages;
-				builder = "bash";
-  
-  				args = ["-c" "mkdir $out && echo Hello world > $out/hello.txt"];
-			}; }) {} projects;*/
+					buildInputs = packages;
+					
+					src = pkgs.writeShellScriptBin "dndevops-checker-script" "pnpm -r run check"; # writeShellScriptBin emits a folder (bin)
+					installPhase = "mkdir -p $out/bin && cp bin/dndevops-checker-script $out/bin/app";
+				};
+			in "${der}/bin/app";
+		};
   	};
 }

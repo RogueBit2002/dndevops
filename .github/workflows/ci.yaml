@@ -1,0 +1,28 @@
+name: CI (Nix)
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - main
+      - development
+
+
+jobs:
+  do-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v5
+      - name: Install nixpkgs
+        run: |
+          sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
+          mkdir -p ~/.config/nix
+          echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+      - name: Install dependencies
+        run: nix develop . --command pnpm install
+      - name: Run CI
+        run: nix develop . --command pnpm -r run check

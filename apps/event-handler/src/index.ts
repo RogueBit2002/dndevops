@@ -1,7 +1,13 @@
-import * as eventReceiverModule from "@dndevops/module-event-receiver";
-import * as eventWorkerModule from "@dndevops/module-event-worker";
+import { Effect, pipe } from "effect";
 
-const receiver = await eventReceiverModule.default({}, {});
-const worker = await eventWorkerModule.default({}, {});
+import { createReceiver, EventPublisher } from "@dndevops/module-event-receiver";
 
-console.log("Hello World!");
+const receive = createReceiver(["devops"]);
+
+const program = receive("devops", "foobar").pipe(
+	Effect.provideService(EventPublisher, EventPublisher.of({
+		publish: (application: string, content: string) => Effect.succeed(console.log("Published!"))
+	}))
+);
+
+Effect.runSync(program);

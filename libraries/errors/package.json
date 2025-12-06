@@ -10,14 +10,19 @@
 	},
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
-		"build": "tsc --build"
+		"build": "tsc --build",
+		"check": "tsc --build && eslint src --config eslint.config.mjs"
 	},
 	"dependencies": {
 		"effect": "catalog:"
 	},
 	"devDependencies": {
+		"@eslint/js": "catalog:",
 		"@types/node": "catalog:",
+		"eslint": "catalog:",
+		"eslint-plugin-only-warn": "catalog:",
 		"rimraf": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"typescript-eslint": "catalog:"
 	}
 }

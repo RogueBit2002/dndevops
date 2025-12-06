@@ -6,18 +6,31 @@
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
 		"build": "tsc --build && node build.mjs",
-		"start": "node ."
+		"start": "node .",
+		"dev": "tsx src/index.ts",
+		"check": "tsc --build && eslint src --config eslint.config.mjs"
 	},
 	"dependencies": {
-		"@dndevops/module-identity": "workspace:^",
-		"@dndevops/library-identity": "workspace:^",
+		"@dndevops/app-identity": "link:",
 		"@dndevops/library-errors": "workspace:^",
-		"effect": "catalog:"
+		"@dndevops/library-identity": "workspace:^",
+		"@dndevops/library-public-api": "workspace:^",
+		"@dndevops/module-identity": "workspace:^",
+		"@effect/platform": "catalog:",
+		"@effect/platform-node": "^0.100.0",
+		"effect": "catalog:",
+		"nodemailer": "^7.0.10"
 	},
 	"devDependencies": {
+		"@eslint/js": "catalog:",
 		"@types/node": "catalog:",
+		"@types/nodemailer": "^7.0.4",
 		"esbuild": "catalog:",
+		"eslint": "catalog:",
+		"eslint-plugin-only-warn": "catalog:",
 		"rimraf": "catalog:",
-		"typescript": "catalog:"
+		"tsx": "^4.20.6",
+		"typescript": "catalog:",
+		"typescript-eslint": "catalog:"
 	}
 }

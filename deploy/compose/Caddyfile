@@ -1,0 +1,7 @@
+http://localhost {
+    reverse_proxy web:5678
+}
+
+http://mailpit.localhost {
+    reverse_proxy mailpit:8025
+}

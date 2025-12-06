@@ -1,5 +1,5 @@
 {
-	"name": "@dndevops/module-identity",
+	"name": "@dndevops/library-public-api",
 	"private": true,
 	"type": "module",
 	"types": "./dist/index.d.ts",
@@ -14,8 +14,7 @@
 		"check": "tsc --build && eslint src --config eslint.config.mjs"
 	},
 	"dependencies": {
-		"@dndevops/library-errors": "workspace:^",
-		"@dndevops/library-identity": "workspace:^",
+		"@effect/platform": "catalog:",
 		"effect": "catalog:"
 	},
 	"devDependencies": {
