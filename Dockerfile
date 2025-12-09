@@ -19,10 +19,10 @@ COPY --from=builder /workspace/apps/identity/dist /app/dist
 WORKDIR /app
 CMD [ "node", "." ]
 
-FROM runtime AS dndevops-event-handler
+FROM runtime AS dndevops-events
 
-COPY --from=builder /workspace/apps/event-handler/package.json /app/package.json
-COPY --from=builder /workspace/apps/event-handler/dist /app/dist
+COPY --from=builder /workspace/apps/events/package.json /app/package.json
+COPY --from=builder /workspace/apps/events/dist /app/dist
 WORKDIR /app
 CMD [ "node", "." ]
 

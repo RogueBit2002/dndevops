@@ -1,5 +1,5 @@
 {
-	"name": "@dndevops/app-event-handler",
+	"name": "@dndevops/app-events",
 	"private": true,
 	"type": "module",
 	"main": "dist/index.js",

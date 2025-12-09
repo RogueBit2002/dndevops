@@ -2,7 +2,7 @@
 	description = "dndevops development environment";
 
 	inputs = {
-		nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+		nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
 	};
 
 	outputs = { self, nixpkgs, ... } @ inputs: let
@@ -15,17 +15,6 @@
 		};
 
 		packages = builtins.attrValues deps;
-
-		mkScriptWithDeps = name: content: let
-			der = pkgs.stdenv.mkDerivation {
-				name = "dndevops-checker";
-
-				buildInputs = packages;
-				
-				src = pkgs.writeShellScriptBin "dndevops-checker-script" "pnpm -r run check"; # writeShellScriptBin emits a folder (bin)
-				installPhase = "mkdir -p $out/bin && cp bin/dndevops-checker-script $out/bin/app";
-			};
-		in "${der}/bin/app";
 	in {
 		devShells.${system}.default = pkgs.mkShell {
 			name = "dndevops";
@@ -37,18 +26,18 @@
 			'';
         };
 
-		apps.${system}.check = {
+		apps.${system}.dockerize = {
 			type = "app";
-			program = let
-				der = pkgs.stdenv.mkDerivation {
-					name = "dndevops-checker";
-
-					buildInputs = packages;
-					
-					src = pkgs.writeShellScriptBin "dndevops-checker-script" "pnpm -r run check"; # writeShellScriptBin emits a folder (bin)
-					installPhase = "mkdir -p $out/bin && cp bin/dndevops-checker-script $out/bin/app";
-				};
-			in "${der}/bin/app";
+			program = let 
+				targets = [
+					"dndevops-events"
+					"dndevops-frontend"
+					"dndevops-game"
+					"dndevops-identity"
+				];
+			in builtins.toString (pkgs.writeShellScript "dndevops-dockerize" ''
+				${builtins.toString (builtins.map (i: "docker build . --target=${i} --tag=${i}:latest\n") targets)}
+			'');
 		};
   	};
 }

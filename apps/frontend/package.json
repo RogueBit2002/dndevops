@@ -18,5 +18,9 @@
 		"rimraf": "catalog:",
 		"typescript": "catalog:",
 		"typescript-eslint": "catalog:"
+	},
+	"dependencies": {
+		"@effect/platform": "catalog:",
+		"effect": "catalog:"
 	}
 }

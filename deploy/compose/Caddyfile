@@ -1,7 +1,18 @@
 http://localhost {
-    reverse_proxy web:5678
+    
+	handle_path /api/* {
+		reverse_proxy /identity/* dndevops-identity:3000
+		reverse_proxy /events/* dndevops-events:3000
+		reverse_proxy /game/* dndevops-game:3000
+	}
+
+	reverse_proxy / web:5678
 }
 
 http://mailpit.localhost {
     reverse_proxy mailpit:8025
+}
+
+http://rabbitmq.localhost {
+	reverse_proxy rabbitmq:15672
 }

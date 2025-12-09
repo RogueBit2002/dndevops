@@ -15,10 +15,12 @@ import { IdentityGroup,  } from "@dndevops/library-public-api";
 import { IdentityService } from "@dndevops/module-identity";
 
 
-import { createTransport } from "nodemailer";
+// import { createTransport } from "nodemailer";
+
+
 const IsolatedApi = HttpApi.make("DnDevOps-Identity").add(IdentityGroup);
 
-
+/*
 const mailer = createTransport({
 	host: "localhost",
 	port: 1025 ,
@@ -35,7 +37,7 @@ await mailer.sendMail({
 	subject: "Hello ✔",
 	text: "Hello world?", // plain‑text body
 	html: "<b>Hello world?</b>", // HTML body
-});
+});*/
 
 
 const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handlers) => handlers

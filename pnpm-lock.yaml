@@ -8,7 +8,7 @@ settings:
 catalogs:
   default:
     '@effect/platform':
-      specifier: ^0.93.3
+      specifier: 0.93.3
       version: 0.93.3
     '@eslint/js':
       specifier: 9.39.1
@@ -17,7 +17,7 @@ catalogs:
       specifier: ^24.9.2
       version: 24.10.1
     effect:
-      specifier: ^3.19.3
+      specifier: 3.19.4
       version: 3.19.4
     esbuild:
       specifier: ^0.25.11
@@ -40,7 +40,7 @@ catalogs:
 
 importers:
 
-  apps/event-handler:
+  apps/events:
     dependencies:
       '@dndevops/module-event-receiver':
         specifier: workspace:^
@@ -78,6 +78,13 @@ importers:
         version: 8.48.1(eslint@9.39.1)(typescript@5.9.3)
 
   apps/frontend:
+    dependencies:
+      '@effect/platform':
+        specifier: 'catalog:'
+        version: 0.93.3(effect@3.19.4)
+      effect:
+        specifier: 'catalog:'
+        version: 3.19.4
     devDependencies:
       '@eslint/js':
         specifier: 'catalog:'

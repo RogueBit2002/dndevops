@@ -11,6 +11,15 @@ services:
     networks:
       - internal_net
 
+  rabbitqm:
+    image: rabbitmq:4.2.1-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: carrot
+    networks:
+      - internal_net
+
   web:
     image: hashicorp/http-echo
     container_name: hello-world
@@ -21,9 +30,54 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     container_name: mailpit
-    restart: unless-stopped
     networks:
       - internal_net
+
+  # App
+  dndevops-identity:
+    image: dndevops-identity:latest
+    container_name: dndevops-identity
+    networks:
+      - internal_net
+
+  dndevops-identity-db:
+    image: postgres:18.1
+    container_name: dndevops-identity-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: identity
+    volumes:
+      - ./persistency/dndevops-identity-db:/var/lib/postgresql
+    networks:
+      - internal_net
+
+  dndevops-game:
+    image: dndevops-game:latest
+    container_name: dndevops-game
+    networks:
+      - internal_net
+
+  dndevops-game-db:
+    image: postgres:18.1
+    container_name: dndevops-game-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: identity
+    volumes:
+      - ./persistency/dndevops-game-db:/var/lib/postgresql
+    networks:
+      - internal_net
+  
+  dndevops-events:
+    image: dndevops-events:latest
+    container_name: dndevops-events
+    networks:
+      - internal_net
+  
 
 networks:
   internal_net:
