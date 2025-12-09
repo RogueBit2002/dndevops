@@ -23,7 +23,7 @@ jobs:
       - name: Pre-process dev shell
         run: nix build --no-link .#devShells.$(nix eval --impure --raw --expr 'builtins.currentSystem').default
       - name: Install dependencies
-        run: nix develop . --command pnpm install
+        run: nix develop . --command pnpm install --frozen-lockfile
       - name: Run checks
         run: nix develop . --command pnpm -r --workspace-concurrency=1 run check
       - name: Build apps
