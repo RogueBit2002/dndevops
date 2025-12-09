@@ -79,6 +79,9 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@dndevops/library-public-api':
+        specifier: workspace:^
+        version: link:../../libraries/public-api
       '@effect/platform':
         specifier: 'catalog:'
         version: 0.93.3(effect@3.19.4)

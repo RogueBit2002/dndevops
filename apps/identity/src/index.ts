@@ -49,7 +49,8 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 		yield* Console.log(request.headers);
 		return "Hi!";
 	}))
-	.handle("send-refresh-request", () => Effect.gen(function*() {
+	.handle("send-refresh-request", ({ request }) => Effect.gen(function*() {
+		yield* Console.log(request.headers);
 		return;
 	}))
 );

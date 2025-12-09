@@ -21,6 +21,7 @@
 	},
 	"dependencies": {
 		"@effect/platform": "catalog:",
-		"effect": "catalog:"
+		"effect": "catalog:",
+		"@dndevops/library-public-api": "workspace:^"
 	}
 }

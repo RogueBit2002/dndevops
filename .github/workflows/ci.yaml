@@ -10,7 +10,6 @@ on:
       - main
       - development
 
-
 jobs:
   do-ci:
     runs-on: ubuntu-latest
@@ -25,5 +24,7 @@ jobs:
         run: nix build --no-link .#devShells.$(nix eval --impure --raw --expr 'builtins.currentSystem').default
       - name: Install dependencies
         run: nix develop . --command pnpm install
-      - name: Run CI
+      - name: Run checks
         run: nix develop . --command pnpm -r run check
+      - name: Build apps
+        run: nix develop . --command pnpm -r run build

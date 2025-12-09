@@ -38,4 +38,4 @@ export const EventGroup = HttpApiGroup.make("Events")
 		.add(HttpApiEndpoint.put("update-routes")`/routes`.addSuccess(Schema.Void)).prefix("/events");
 
 
-export const CompositeApi = HttpApi.make("DnDevOps_API").add(IdentityGroup).add(GameGroup).add(EventGroup);
+export const Api = HttpApi.make("DnDevOps_API").add(IdentityGroup).add(GameGroup).add(EventGroup);

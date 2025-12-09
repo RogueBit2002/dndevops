@@ -8,5 +8,5 @@
     },
 
     "include": [ "src/**/*.ts" ],
-    "references": [ ]
+    "references": [ { "path": "../../libraries/public-api"}]
 }

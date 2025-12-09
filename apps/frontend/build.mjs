@@ -5,7 +5,7 @@ await esbuild.build({
 	outdir: "dist",
 	
 	format: "esm",
-	platform: "node",
+	platform: "browser",
 	bundle: true,
 	minify: true
 });
