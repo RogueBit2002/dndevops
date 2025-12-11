@@ -1,4 +1,4 @@
-http://localhost {
+http://localhost:8000 {
     
 	handle_path /api/* {
 		reverse_proxy /identity/* dndevops-identity:3000
@@ -9,10 +9,10 @@ http://localhost {
 	reverse_proxy / web:5678
 }
 
-http://mailpit.localhost {
+http://mailpit.localhost:8000 {
     reverse_proxy mailpit:8025
 }
 
-http://rabbitmq.localhost {
+http://rabbitmq.localhost:8000 {
 	reverse_proxy rabbitmq:15672
 }

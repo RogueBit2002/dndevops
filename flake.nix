@@ -19,7 +19,39 @@
 		devShells.${system}.default = pkgs.mkShell {
 			name = "dndevops";
 			
-			inherit packages;
+			packages = packages ++ [ (pkgs.writeShellApplication {
+				name = "change";
+
+				text = let
+					config = {
+						"$schema" = "https://unpkg.com/@changesets/config@3.1.2/schema.json";
+						"changelog" = "@changesets/cli/changelog";
+						"commit" = false;
+						"fixed" = [];
+						"linked" = [];
+						"access" = "restricted";
+						"baseBranch" = "main";
+						"updateInternalDependencies" = "patch";
+						"privatePackages" = {
+							"version" = true;
+							"tag" = false;
+						};
+					};
+
+				in ''
+if [ $# -eq 0 ]; then
+	
+	pnpm changeset --ignore "@dndevops/library-*" --ignore "@dndevops/module-*" 
+elif [ "$1" == "version" ]; then
+    pnpm changeset version
+else
+    echo "Invalid arguments"
+	exit 1
+fi
+				'';
+
+				runtimeInputs = packages;
+			})];
 
 			shellHook = ''
 				echo "Have fun developing! <3"
@@ -36,7 +68,7 @@
 					"dndevops-identity"
 				];
 			in builtins.toString (pkgs.writeShellScript "dndevops-dockerize" ''
-				${builtins.toString (builtins.map (i: "docker build . --target=${i} --tag=${i}:latest\n") targets)}
+				${builtins.toString (builtins.map (i: "docker build . --target=${i} --tag=${i}:latest  --network host\n") targets)}
 			'');
 		};
   	};

@@ -1,6 +1,7 @@
 import {
   HttpApi,
   HttpApiEndpoint,
+  HttpApiError,
   HttpApiGroup,
   OpenApi
 } from "@effect/platform";
@@ -15,9 +16,25 @@ const UnauthHeaderSchema = Schema.Struct({
 });
 
 export const IdentityGroup = HttpApiGroup.make("Identity")
-		.add(HttpApiEndpoint.get("get-access-token")`/access`.addSuccess(Schema.String))
-		.add(HttpApiEndpoint.get("get-refresh-token")`/refresh`.addSuccess(Schema.String))
-		.add(HttpApiEndpoint.post("send-refresh-request")`/refresh`.addSuccess(Schema.Void)).prefix("/identity");
+		.add(HttpApiEndpoint.get("get-access-token")`/access`
+			.addSuccess(Schema.String)
+			.addError(HttpApiError.Unauthorized)
+			.setHeaders(Schema.Struct({
+				Authorization: Schema.String.pipe(Schema.filter(s => s.startsWith("Bearer ")))
+			}))
+		)
+		.add(HttpApiEndpoint.get("get-refresh-token")`/refresh`
+			.addSuccess(Schema.String)
+			.addError(HttpApiError.Unauthorized)
+			.setHeaders(Schema.Struct({
+				Authorization: Schema.String.pipe(Schema.filter((s) => s.startsWith("Basic ")))
+			}))
+		)
+		.add(HttpApiEndpoint.post("send-refresh-request")`/refresh`
+			.addSuccess(Schema.Void)
+			.setPayload(Schema.Struct({ email: Schema.String }))
+			.addError(HttpApiError.NotFound)
+		).prefix("/identity");
 
 		/*.add(HttpApiEndpoint.get("get-teams")`/teams`.addSuccess(Schema.Void)) // Assignment check
 		.add(HttpApiEndpoint.get("get-team")`/teams/:team`.addSuccess(Schema.Void)) // Assignment check

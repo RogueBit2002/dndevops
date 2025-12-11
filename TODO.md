@@ -1,4 +1,7 @@
-Effect HTTP
+Effect PostgreSQL
+    data services
+
 Effect Config
-Effect Postgres
-Effect AMQP
+    application settings
+
+    

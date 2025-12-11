@@ -2,12 +2,13 @@ import {
 	HttpApi,
 	HttpApiBuilder,
 	HttpApiEndpoint,
+	HttpApiError,
 	HttpApiGroup,
 	HttpMiddleware,
 	HttpServer
 } from "@effect/platform"
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
-import { Console, Effect, Layer, Schema } from "effect"
+import { Console, Effect, Either, Layer, Schema, flow } from "effect"
 import { createServer } from "node:http"
 
 import { IdentityGroup,  } from "@dndevops/library-public-api";
@@ -15,43 +16,49 @@ import { IdentityGroup,  } from "@dndevops/library-public-api";
 import { IdentityService } from "@dndevops/module-identity";
 
 
-// import { createTransport } from "nodemailer";
-
-
 const IsolatedApi = HttpApi.make("DnDevOps-Identity").add(IdentityGroup);
-
-/*
-const mailer = createTransport({
-	host: "localhost",
-	port: 1025 ,
-	secure: false, // true for 465, false for other ports
-	auth: {
-		user: "login@doesnt.matter",
-		pass: "beepboop",
-	},
-});
-
-await mailer.sendMail({
-	from: '"Maddison Foo Koch" <maddison53@ethereal.email>',
-	to: "bar@example.com, baz@example.com",
-	subject: "Hello ✔",
-	text: "Hello world?", // plain‑text body
-	html: "<b>Hello world?</b>", // HTML body
-});*/
 
 
 const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handlers) => handlers
-	.handle("get-access-token", () => Effect.gen(function*() {
-		//const x = yield* IdentityService.Live.getAccessToken("Hi!");
-		return "Hey!";
+	.handle("get-access-token", ({ request, headers }) => Effect.gen(function*() {
+		const identity = yield* IdentityService;
+
+		const refreshToken = headers.Authorization.substring("Bearer ".length);
+
+		const result = yield* Effect.either(identity.getAccessToken(refreshToken));
+
+		if(Either.isRight(result))
+			return result.right;
+
+		return yield* new HttpApiError.Unauthorized;
 	}))
-	.handle("get-refresh-token", ({ request }) => Effect.gen(function*() {
-		yield* Console.log(request.headers);
-		return "Hi!";
+	.handle("get-refresh-token", ({ request, headers }) => Effect.gen(function*() {
+		const identity = yield* IdentityService;
+
+		const encoded = headers.Authorization.substring("Basic ".length);
+
+		const decoded = btoa(encoded);
+
+		const [ email, nonce ] = decoded.split(":");
+
+		if(email == undefined || nonce == undefined)
+			return yield* new HttpApiError.Unauthorized;
+
+		const either = yield* Effect.either(identity.getRefreshToken(email, nonce));
+
+		//Wtf is going on?? left is right and right is left????
+		if(Either.isRight(either))
+			return either.right;
+
+		return yield* new HttpApiError.Unauthorized;
 	}))
-	.handle("send-refresh-request", ({ request }) => Effect.gen(function*() {
-		yield* Console.log(request.headers);
-		return;
+	.handle("send-refresh-request", ({ request, payload }) => Effect.gen(function*() {
+		const identity = yield* IdentityService;
+
+		const result = yield* Effect.either(identity.requestRefreshToken(payload.email));
+
+		if(Either.isLeft(result))
+			return yield* new HttpApiError.NotFound;
 	}))
 );
 
@@ -66,8 +73,11 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
 	// Log the server's listening address
 	HttpServer.withLogAddress,
 	// Set up the Node.js HTTP server
-	Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 }))
+	Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+	
+	Layer.provide(IdentityService.Default)
 );
+
 
 // Launch the server
 Layer.launch(HttpLive).pipe(NodeRuntime.runMain);
