@@ -14,30 +14,71 @@ export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<{}>
 let _nonce: string | undefined = undefined;
 
 
-
-const PgLive = Layer.unwrapEffect(
-	Effect.gen(function*() {
-		return PgClient.layer({
-			url: Redacted.make("dndevops-identity-db"),
-		})
+class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAccass", {
+	effect: Effect.gen(function*() {
+		return {
+			userExists: (email: string) => Effect.gen(function*() { return false; }),
+			addRefreshNonceToUser: (email: string, nonce: string, expiresAt: DateTime.Utc) => Effect.gen(function*() { }),
+			getRefreshTokens: (email: string) => Effect.gen(function*() { return [] as string[]; }),
+			addRefreshTokenToUser: (email: string, refreshToken: string) => Effect.gen(function*() {}),
+			createTeam: (displayName: string) => Effect.gen(function*() { return ""; }),
+			deleteTeam: (id: string) => Effect.gen(function*() {}),
+			updateTeam: (id: string, displayName: string) => Effect.gen(function*() {}),
+			getTeamsByUser: (email: string) => Effect.gen(function*() { return [] as string[]; }),
+			assignUserToTeam: (email: string, id: string) => Effect.gen(function*() { }),
+			removeUserFromTeam: (email: string, id: string) => Effect.gen(function*() { }),
+		}
 	})
-).pipe((self) =>
-  Layer.retry(
-    self,
-    Schedule.identity<Layer.Layer.Error<typeof self>>().pipe(
-      Schedule.check((input) => input._tag === "SqlError"),
-      Schedule.intersect(Schedule.exponential("1 second")),
-      Schedule.intersect(Schedule.recurs(2)),
-      Schedule.onDecision(([[_error, duration], attempt], decision) =>
-        decision._tag === "Continue"
-          ? Effect.logInfo(
-              `Retrying database connection in ${Duration.format(duration)} (attempt #${++attempt})`,
-            )
-          : Effect.void,
-      ),
-    ),
-  ),
-);
+}){};
+
+export class IdentityModule extends Effect.Service<IdentityModule>()("@dndevops/Identity_Module", {
+	dependencies: [ DataAccess.Default ],
+	effect: Effect.gen(function*() {
+
+		// Module setup
+		const mailer = createTransport({
+			host: "mailpit",
+			port: 1025 ,
+			secure: false, // true for 465, false for other ports
+			auth: {
+				user: "login@doesnt.matter",
+				pass: "beepboop",
+			},
+		});
+
+		const sendMail = async (email: string, subject: string, message: string) => await mailer.sendMail({ from: "dndevops@company.com", to: email, subject, text: message });
+		
+		const data = yield* DataAccess;
+
+		return {
+			requestRefreshToken: (email: string) => Effect.gen(function*() {
+				const userExists = yield* data.userExists(email);
+				
+				if(!userExists)
+					return yield* new MissingUserError;
+
+				const digits = Array.from({ length: 5}, () => Math.floor(Math.random() * 10))
+				const nonce = digits.join("");
+
+				const now = yield* DateTime.now;
+				const expiresAt = DateTime.add(now, { minutes: 10});
+
+				yield* data.addRefreshNonceToUser(email, nonce, expiresAt);
+
+				yield* Effect.promise(async () => sendMail(email, "DnDevOps login", "<nonce>"));
+			}),
+			getRefreshToken: (email: string, nonce: string) => Effect.gen(function*() {}),
+			getAccessToken: (email: string, refreshToken: string) => Effect.gen(function*() {}),
+			getTeam: (id: string) => Effect.gen(function*() {}),
+			createTeam: (displayName: string) => Effect.gen(function*() {}),
+			deleteTeam: (id: string) => Effect.gen(function*() {}),
+			updateTeam: (id: string, displayName: string) => Effect.gen(function*() {}),
+			assignUserToTeam: (user: string, team: string) => Effect.gen(function*() {}),
+			removeUserFromTeam: (user: string, team: string) => Effect.gen(function*() {}),
+		};
+	})
+}) {};
+
 
 class IdentityDataService extends Effect.Service<IdentityDataService>()("@dndevops/IdentityDataService", {
 	dependencies: [ ],
