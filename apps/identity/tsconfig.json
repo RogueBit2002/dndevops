@@ -5,13 +5,17 @@
         "outDir": "./dist",
 
         "noEmit": true,
+
+		"plugins": [
+			{
+				"name": "@effect/language-service"
+			}
+		]
     },
 
     "include": [ "src/**/*.ts" ],
     "references": [
         { "path": "../../modules/identity" },
-        { "path": "../../libraries/public-api"},
-        { "path": "../../libraries/identity" },
-        { "path": "../../libraries/errors" }
+        { "path": "../../libraries/domain"}
     ]
 }

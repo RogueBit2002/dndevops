@@ -1,5 +1,6 @@
 {
     "devDependencies": {
-        "@changesets/cli": "^2.29.8"
+        "@changesets/cli": "^2.29.8",
+		"@effect/language-service": "^0.62.1"
     }
 }

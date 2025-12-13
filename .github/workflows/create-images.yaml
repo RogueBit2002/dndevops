@@ -1,0 +1,8 @@
+name: Create Images
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Continous Integration"] #Its the name of an workflow
+    types:
+      - completed

@@ -6,7 +6,6 @@
     },
     "include": [ "src/**/*.ts" ],
     "references": [
-        { "path": "../../libraries/identity" },
-        { "path": "../../libraries/errors" }
+        { "path": "../../libraries/domain" }
     ]
 }

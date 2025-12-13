@@ -11,9 +11,10 @@ import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
 import { Console, Effect, Either, Layer, Schema, flow } from "effect"
 import { createServer } from "node:http"
 
-import { IdentityGroup,  } from "@dndevops/library-public-api";
+import { IdentityGroup,  } from "@dndevops/library-domain/api";
 
 import { IdentityService } from "@dndevops/module-identity";
+import { UnauthorizedError, UserNotFoundError } from "@dndevops/library-domain/errors";
 
 
 const IsolatedApi = HttpApi.make("DnDevOps-Identity").add(IdentityGroup);
@@ -30,7 +31,7 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 		if(Either.isRight(result))
 			return result.right;
 
-		return yield* new HttpApiError.Unauthorized;
+		return yield* new UnauthorizedError;
 	}))
 	.handle("get-refresh-token", ({ request, headers }) => Effect.gen(function*() {
 		const identity = yield* IdentityService;
@@ -42,7 +43,7 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 		const [ email, nonce ] = decoded.split(":");
 
 		if(email == undefined || nonce == undefined)
-			return yield* new HttpApiError.Unauthorized;
+			return yield*  new UnauthorizedError;
 
 		const either = yield* Effect.either(identity.getRefreshToken(email, nonce));
 
@@ -50,7 +51,7 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 		if(Either.isRight(either))
 			return either.right;
 
-		return yield* new HttpApiError.Unauthorized;
+		return yield* new UnauthorizedError;
 	}))
 	.handle("send-refresh-request", ({ request, payload }) => Effect.gen(function*() {
 		const identity = yield* IdentityService;
@@ -58,7 +59,7 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 		const result = yield* Effect.either(identity.requestRefreshToken(payload.email));
 
 		if(Either.isLeft(result))
-			return yield* new HttpApiError.NotFound;
+			return yield* new UserNotFoundError;
 	}))
 );
 

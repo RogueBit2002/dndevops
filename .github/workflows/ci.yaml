@@ -1,4 +1,4 @@
-name: CI (Nix)
+name: Continous Integration
 
 on:
   push:

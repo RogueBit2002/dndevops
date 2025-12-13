@@ -12,9 +12,7 @@
 		"check": "tsc --build && eslint src --config eslint.config.mjs"
 	},
 	"dependencies": {
-		"@dndevops/library-errors": "workspace:*",
-		"@dndevops/library-identity": "workspace:*",
-		"@dndevops/library-public-api": "workspace:*",
+		"@dndevops/library-domain": "workspace:*",
 		"@dndevops/module-identity": "workspace:*",
 		"@effect/platform": "catalog:",
 		"@effect/platform-node": "^0.100.0",

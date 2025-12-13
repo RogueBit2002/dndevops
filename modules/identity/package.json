@@ -15,8 +15,7 @@
 		"check": "tsc --build && eslint src --config eslint.config.mjs"
 	},
 	"dependencies": {
-		"@dndevops/library-errors": "workspace:^",
-		"@dndevops/library-identity": "workspace:^",
+		"@dndevops/library-domain": "workspace:^",
 		"@effect/sql": "^0.48.6",
 		"@effect/sql-pg": "^0.49.7",
 		"effect": "catalog:",
