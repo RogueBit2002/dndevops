@@ -1,0 +1,38 @@
+services: 
+  # rabbitmq:
+  #  image: rabbitmq:4.2.1-management
+  #  environment:
+  #    RABBITMQ_DEFAULT_USER: service
+  #    RABBITMQ_DEFAULT_PASS: password
+  #  ports:
+  #    - "8003:15672"
+  #    - 
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8002:8025"
+
+  mongo:
+    image: mongo:7.0.26
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: dndevops
+    volumes:
+      - ./init-db.js:/docker-entrypoint-initdb.d/init-db.js:ro
+    ports:
+      - "27017:27017"
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8001:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_BASICAUTH_ENABLED: true
+      ME_CONFIG_BASICAUTH_USERNAME: mongoexpressuser
+      ME_CONFIG_BASICAUTH_PASSWORD: mongoexpresspass

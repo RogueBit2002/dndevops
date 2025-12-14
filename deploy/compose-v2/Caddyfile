@@ -1,6 +1,6 @@
 http://localhost:8000 {
 
-	reverse_proxy / dndevops:8000
+	reverse_proxy dndevops:8000
 
 }
 

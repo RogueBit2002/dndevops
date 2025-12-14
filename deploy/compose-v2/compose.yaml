@@ -20,8 +20,8 @@ services:
   rabbitmq:
     image: rabbitmq:4.2.1-management
     environment:
-      RABBITMQ_DEFAULT_USER: rabbit
-      RABBITMQ_DEFAULT_PASS: carrot
+      RABBITMQ_DEFAULT_USER: service
+      RABBITMQ_DEFAULT_PASS: password
     networks:
       - dndevops-internal-net
 
@@ -38,7 +38,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: dndevops
     volumes:
-      - ./persistency/dndevops-game-db:/var/lib/postgresql
+      - ./persistency/postgresql:/var/lib/postgresql
     networks:
       - dndevops-internal-net
 
@@ -48,12 +48,9 @@ services:
     environment:
       REDIS_URI: redis://service:password@redis
       AMQP_URI: amqp://rabbit:carrot@rabbitmq
-      POSTGRESQL_URI: postgres://user:password@db/dndevops
+      POSTGRESQL_URI: postgres://service:password@db/dndevops
     networks:
       - dndevops-internal-net
-
-  
-  
 
 networks:
   dndevops-internal-net:

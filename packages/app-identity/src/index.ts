@@ -24,7 +24,7 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 	.handle("get-access-token", ({ request, headers }) => Effect.gen(function*() {
 		const identity = yield* IdentityModule;
 
-		const refreshToken = headers.Authorization.substring("Bearer ".length);
+		const refreshToken = headers.authorization.substring("Bearer ".length);
 
 		const result = yield* Effect.either(identity.getAccessToken(refreshToken));
 
@@ -36,7 +36,7 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 	.handle("get-refresh-token", ({ request, headers }) => Effect.gen(function*() {
 		const identity = yield* IdentityModule;
 
-		const encoded = headers.Authorization.substring("Basic ".length);
+		const encoded = headers.authorization.substring("Basic ".length);
 
 		const decoded = btoa(encoded);
 

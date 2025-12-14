@@ -6,7 +6,8 @@ export const TeamIDSchema = Schema.String.pipe(Schema.filter(s => uuid.validate(
 export type TeamID = typeof TeamIDSchema.Type;
 
 export const TeamDataSchema = Schema.Struct({
-	displayName: Schema.String.pipe(Schema.filter(s => s.length > 1))
+	displayName: Schema.String.pipe(Schema.filter(s => s.length > 1)),
+	members: Schema.Array(Schema.String)
 });
 
 export type TeamData = typeof TeamDataSchema.Type;
@@ -14,4 +15,5 @@ export type TeamData = typeof TeamDataSchema.Type;
 export interface Principal {
 	email: string
 	teams: TeamID[];
+	admin: boolean;
 }

@@ -19,14 +19,14 @@ export const IdentityGroup = HttpApiGroup.make("Identity")
 			.addSuccess(Schema.String)
 			.addError(UnauthorizedError, { status: 401})
 			.setHeaders(Schema.Struct({
-				Authorization: Schema.String.pipe(Schema.filter(s => s.startsWith("Bearer ")))
+				authorization: Schema.String.pipe(Schema.filter(s => s.startsWith("Bearer ")))
 			}))
 		)
 		.add(HttpApiEndpoint.get("get-refresh-token")`/refresh`
 			.addSuccess(Schema.String)
 			.addError(UnauthorizedError, { status: 401})
 			.setHeaders(Schema.Struct({
-				Authorization: Schema.String.pipe(Schema.filter((s) => s.startsWith("Basic ")))
+				authorization: Schema.String.pipe(Schema.filter((s) => s.startsWith("Basic ")))
 			}))
 		)
 		.add(HttpApiEndpoint.post("send-refresh-request")`/refresh`

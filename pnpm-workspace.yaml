@@ -12,6 +12,9 @@ catalog:
   rimraf: ^6.0.1
   typescript: 5.9.3
   typescript-eslint: 8.48.1
+  mongoose: ^9.0.1
+  amqplib: ^0.10.9
+  uuid: ^13.0.0
 
 injectWorkspacePackages: true
 

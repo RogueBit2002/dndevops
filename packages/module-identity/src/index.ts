@@ -2,35 +2,90 @@ import * as PgClient from "@effect/sql-pg/PgClient";
 
 import { Data, Effect, Context, Random, DateTime, Layer, Redacted, Schedule, Duration } from "effect";
 
-import { createTransport } from "nodemailer";
-
 import * as jwt from "jsonwebtoken";
 import { SqlClient } from "@effect/sql";
 
 
-import { Principal } from "@dndevops/domain/identity";
-import { UnauthorizedError, UserNotFoundError } from "@dndevops/domain/errors";
+import { Principal, TeamData, TeamID } from "@dndevops/domain/identity";
+import { InvalidDataError, InvalidPermissionsError, TeamNotFoundError, UnauthorizedError, UserNotFoundError } from "@dndevops/domain/errors";
 
-import { RedisService } from "@dndevops/backend-utility/effect";
+import { MongooseService, AppConfig, MailService } from "@dndevops/backend-utility/effect";
 
-export class DuplicateUserError extends Data.TaggedError("DuplicateUserError")<{}> {};
-export class DuplicateTeamError extends Data.TaggedError("DuplicationTeamTerror")<{}> {};
+import mongoose from "mongoose";
+import * as uuid from "uuid";
 
-let _nonce: string | undefined = undefined;
+
+const NONCE_DURATION = 5 * 60;
+const REFRESH_DURATION = 7 * 24 * 60 * 60;
+const ACCESS_DURATION = 5 * 60;
 
 class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAccass", {
-	dependencies: [ RedisService.Default ],
+	dependencies: [ MongooseService.Default ],
 	effect: Effect.gen(function*() {
-		
-		const redis = yield* RedisService;
+	
+		const mgoose = yield* MongooseService;
 
+
+		const teamSchema = new mongoose.Schema({
+			uuid: {
+				type: String,
+				required: true,
+				unique: true,
+				lowercase: true,
+				index: true
+			},
+			displayName: {
+				type: String,
+				required: true
+			},
+			members: [{
+				type: String,
+				required: true	
+			}]
+		});
+
+		const nonceSchema = new mongoose.Schema({
+			email: {
+				type: String,
+				required: true,
+				index: true
+			},
+			nonce: {
+				type: String,
+				required: true,
+				index: true
+			},
+
+			createdAt: { type: Date, default: Date.now, index: {expires: NONCE_DURATION } }
+		});
+
+		const Team = yield* mgoose.use(async (conn) => mongoose.model('Team', teamSchema));
+		const Nonce = yield* mgoose.use(async (conn) => mongoose.model('Nonce', nonceSchema));
+
+		console.log(Nonce);
+		//const UserIdentity = yield* mgoose.use(async (conn))
 		return {
-			userExists: (email: string) => Effect.gen(function*() { return false; }),
-			addRefreshNonceToUser: Effect.fn(function*(email: string, nonce: string, expiresAt: DateTime.Utc) {
-				yield* redis.use((client) => client.set(`identity/${email}.nonce.${nonce}`, "foo", { expiration: { type: "PXAT", value: expiresAt.epochMillis }}));
+			userExists: Effect.fn(function*(email: string) { 
+				return (yield* Effect.promise(() => Team.countDocuments({ members: email }))) > 0;
+			}),
+			addRefreshNonceToUser: Effect.fn(function*(email: string, nonce: string) {
+				//yield* mongoose.use((client) => client.set(`identity/${email}.nonce.${nonce}`, "foo", { expiration: { type: "PXAT", value: expiresAt.epochMillis }}));
+
+				const nonceEntry = new Nonce({
+					email: email,
+					nonce: nonce
+				});
+
+				yield* Effect.promise(() => nonceEntry.save());
 			}),
 			consumeRefreshNonce: Effect.fn(function*(email: string, nonce: string) {
-				const key = `identity/${email}.noncen.${nonce}`;
+				const entry = yield* mgoose.use(async (conn) => Nonce.deleteMany({ email, nonce }))
+
+				if(entry.deletedCount === 0)
+					return false;
+
+				return true;
+				/*const key = `identity/${email}.noncen.${nonce}`;
 				const count = yield* redis.use((client) => client.exists(key));
 
 				if (count == 0)
@@ -38,254 +93,247 @@ class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAc
 
 				yield* redis.use((client) => client.del(key));
 
+				return true;*/
+			}),
+			createTeam: Effect.fn(function*(displayName: string) {
+				// TODO: Create team
+
+				const id = uuid.v4();
+				const team = new Team({
+					uuid: id,
+					displayName,
+					members: []
+				});
+				
+				yield* Effect.promise(() => team.save());
+
+				return id;
+			}),
+			deleteTeam: Effect.fn(function*(id: string) {
+				// TODO: Delete team;
+			}),
+			teamExists: Effect.fn(function*(id: TeamID) {
+				// TODO: Check team
+
+				const result = yield* mgoose.use(async conn => Team.findOne({ uuid: id }));
+				
+				if(result === null)
+					return false;
+
 				return true;
 			}),
-			//getRefreshNoncesByUser: (email: string) => Effect.gen(function*() { return [] as string[]; }),
-			removeRefreshNonceFromUser: (email: string, nonce: string) => Effect.gen(function*() { }),
-			getRefreshTokens: (email: string) => Effect.gen(function*() { return [] as string[]; }),
-			addRefreshTokenToUser: (email: string, refreshToken: string) => Effect.gen(function*() {}),
-			createTeam: (displayName: string) => Effect.gen(function*() { return ""; }),
-			deleteTeam: (id: string) => Effect.gen(function*() {}),
-			updateTeam: (id: string, displayName: string) => Effect.gen(function*() {}),
-			getTeamsByUser: (email: string) => Effect.gen(function*() { return [] as string[]; }),
-			assignUserToTeam: (email: string, id: string) => Effect.gen(function*() { }),
-			removeUserFromTeam: (email: string, id: string) => Effect.gen(function*() { }),
+
+			updateTeam: Effect.fn(function*(id: string, displayName: string) {
+				yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id }, { $set: { displayName } }));
+			}),
+			getTeamsByUser: Effect.fn(function*(email: string) { 
+				/*
+				const docs = yield* Effect.promise(() => Team.aggregate([
+					// Match documents where 'friends' array contains 'Joe'
+					{
+						$match: {
+							members: email  // Filter documents where 'friends' contains 'Joe'
+						}
+					},
+					// Group by 'nonce' to get unique nonces
+					{
+						$group: {
+							_id: "$uuid"  // Group by the 'nonce' field
+						}
+					},
+					// Project to return only the 'nonce' values
+					{
+						$project: {
+							_id: 0,       // Exclude the '_id' field
+							uuid: "$_id"  // Rename '_id' to 'nonce'
+						}
+					}
+				]));
+
+				// Extract the 'nonce' values from the result
+				const nonces = result.map(doc => doc.nonce);*/
+
+				const teams = yield* Effect.promise(() => Team.find({ members: email }));
+
+				return teams.map(t => t.uuid) as TeamID[];
+
+			}),
+			getTeams: Effect.fn(function*() {
+				const ids = yield* Effect.promise(() => Team.distinct("uuid"));
+
+				return ids as TeamID[];
+			}),
+			getTeam: Effect.fn(function*(id: TeamID) {
+				const d = yield* Effect.promise(() => Team.findOne({ uuid: id }));
+
+				if(d === null)
+					throw "Team not found";
+
+
+				return { id: d.uuid, displayName: d.displayName, members: d.members } as ({id: TeamID} & TeamData);
+			}),
+			assignUserToTeam: Effect.fn(function*(email: string, id: TeamID) {
+				yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id}, {
+					$addToSet: {
+						members: email
+					}
+				}));
+			}),
+			removeUserFromTeam: Effect.fn(function*(email: string, id: TeamID) {
+				yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id}, {
+					$pull: {
+						members: email
+					}
+				}));
+			}),
 		}
 	})
 }){};
 
 export class IdentityModule extends Effect.Service<IdentityModule>()("@dndevops/Identity_Module", {
-	dependencies: [ DataAccess.Default ],
+	dependencies: [ DataAccess.Default, AppConfig.Default, MailService.Default ],
 	effect: Effect.gen(function*() {
 
-		// Module setup
-		const mailer = createTransport({
-			host: "mailpit",
-			port: 1025 ,
-			secure: false, // true for 465, false for other ports
-			auth: {
-				user: "login@doesnt.matter",
-				pass: "beepboop",
-			},
-		});
+		console.log("Creating IdentityModule!");
 
-		const sendMail = async (email: string, subject: string, message: string) => await mailer.sendMail({ from: "dndevops@company.com", to: email, subject, text: message });
-		
+		const mail = yield* MailService;
 		const data = yield* DataAccess;
+
+		const appConfig = yield* AppConfig;
 
 		return {
 			requestRefreshToken: (email: string) => Effect.gen(function*() {
-				const userExists = yield* data.userExists(email);
 				
-				if(!userExists)
+				if(!(yield* data.userExists(email)) && !appConfig.admins.includes(email))
 					return yield* new UserNotFoundError;
 
 				const digits = Array.from({ length: 5}, () => Math.floor(Math.random() * 10))
 				const nonce = digits.join("");
 
-				const now = yield* DateTime.now;
-				const expiresAt = DateTime.add(now, { minutes: 10});
+				/*const now = yield* DateTime.now;
+				const expiresAt = DateTime.add(now, { minutes: 10});*/
 
-				yield* data.addRefreshNonceToUser(email, nonce, expiresAt);
-
-				yield* Effect.promise(async () => sendMail(email, "DnDevOps login", nonce));
+				console.log("A");
+				yield* data.addRefreshNonceToUser(email, nonce);
+				console.log("B");
+				yield* mail.send(email, "DnDevOps login", nonce);
+				console.log("C");
 			}),
+			
 			getRefreshToken: (email: string, nonce: string) => Effect.gen(function*() { 
+				if(!(yield* data.userExists(email)) && !appConfig.admins.includes(email))
+					return yield* new UserNotFoundError;
 
-				const success = yield* data.consumeRefreshNonce(email, nonce);
-
-				if (!success)
+				if (!(yield* data.consumeRefreshNonce(email, nonce)))
 					return yield* new UnauthorizedError;
 
-				yield* data.removeRefreshNonceFromUser(email, nonce);
+				const now = yield* DateTime.now;
 
-				// TODO: Make refresh token
-				const refreshToken = "xxx";
+				const payload = {
+					email,
+					exp: DateTime.add(now, { days: 7 }).epochMillis
+				}
 
-				yield* data.addRefreshTokenToUser(email, refreshToken);
+				const refreshToken = jwt.sign(payload, appConfig.jwt_secret, { algorithm: "HS512" });
+
+				//yield* data.addRefreshTokenToUser(email, refreshToken);
+
 				return refreshToken;
 			}),
+
 			getAccessToken: (refreshToken: string) => Effect.gen(function*() {
-				let decoded: {[key: string]: any};
+				let decoded;
+				
 				try {
-					decoded = jwt.verify(refreshToken, 'shhhhh') as any;
+					decoded = jwt.verify(refreshToken, appConfig.jwt_secret) as any;
 				} catch {
 					return yield* new UnauthorizedError;
 				}
 
 				const email = decoded.email;
 
-				const tokens = yield* data.getRefreshTokens(email);
+				if(!(yield* data.userExists(email)) && !appConfig.admins.includes(email))
+					return yield* new UserNotFoundError;
+
+				// TODO: Implement refreshs token swaps and generational stops
+				/*const tokens = yield* data.getRefreshTokens(email);
 
 				if(!tokens.includes(refreshToken))
-					return yield* new UnauthorizedError;
+					return yield* new UnauthorizedError;*/
 
 				const teams = yield* data.getTeamsByUser(email);
 				const now = yield* DateTime.now;
 
 				const payload = {
 					email,
-					exp: DateTime.add(now, { minutes: 10 }),
+					exp: DateTime.add(now, { minutes: 10 }).epochMillis,
 					teams
 				};
 
-				const accessToken = "yyy";
+				const accessToken = jwt.sign(payload, appConfig.jwt_secret, { algorithm: "HS512" });
 
 				return accessToken;
 			}),
-			getTeam: (principal: Principal, id: string) => Effect.gen(function*() {}),
-			createTeam: (principal: Principal, displayName: string) => Effect.gen(function*() {}),
-			deleteTeam: (principal: Principal, id: string) => Effect.gen(function*() {}),
-			updateTeam: (principal: Principal, id: string, displayName: string) => Effect.gen(function*() {}),
-			assignUserToTeam: (principal: Principal, user: string, team: string) => Effect.gen(function*() {}),
-			removeUserFromTeam: (principal: Principal, user: string, team: string) => Effect.gen(function*() {}),
+
+			getTeam: (principal: Principal, id: TeamID) => Effect.gen(function*() { 
+				if(!(yield* data.teamExists(id)))
+					return yield* new TeamNotFoundError;
+
+				return yield* data.getTeams()
+			}),
+
+			getTeams: Effect.fn(function*() {
+				return yield* data.getTeams();
+			}),
+
+			createTeam: Effect.fn(function*(principal: Principal, displayName: string) {
+				if(!principal.admin)
+					return yield* new InvalidPermissionsError;
+
+				if(!displayName || displayName.length < 1)
+					return yield* new InvalidDataError;
+				
+				const id = yield* data.createTeam(displayName);
+
+				return id;
+			}),
+			deleteTeam: Effect.fn(function*(principal: Principal, id: TeamID) {
+				if(!principal.admin)
+					return yield* new InvalidPermissionsError;
+
+				if(!(yield* data.teamExists(id)))
+					return yield* new TeamNotFoundError;
+
+				yield* data.deleteTeam(id);
+			}),
+			updateTeam: Effect.fn(function*(principal: Principal, id: string, displayName: TeamID) {
+				if(!principal.admin)
+					return yield* new InvalidPermissionsError;
+
+
+			}),
+			assignUserToTeam: Effect.fn(function*(principal: Principal, user: string, team: TeamID) {
+				if(!principal.admin)
+					return yield* new InvalidPermissionsError;
+
+				if(!(yield* data.teamExists(team)))
+					return yield* new TeamNotFoundError;
+
+				yield* data.assignUserToTeam(user, team);
+
+			}),
+			removeUserFromTeam: Effect.fn(function*(principal: Principal, user: string, team: TeamID) {
+				if(!principal.admin)
+					return yield* new InvalidPermissionsError;
+
+				if(!(yield* data.userExists(user)) && !appConfig.admins.includes(user))
+					return yield* new UserNotFoundError;
+
+				if(!(yield* data.teamExists(team)))
+					return yield* new TeamNotFoundError;
+
+				yield* data.removeUserFromTeam(user, team);
+			})
 		};
 	})
 }) {};
-
-/*
-export class MailService extends Effect.Service<MailService>()("@dndevops/MailService", {
-	effect: Effect.gen(function*() {
-		const mailer = createTransport({
-			host: "mailpit",
-			port: 1025 ,
-			secure: false, // true for 465, false for other ports
-			auth: {
-				user: "login@doesnt.matter",
-				pass: "beepboop",
-			},
-		});
-
-
-		return (email: string, subject: string, message: string) => Effect.promise(async () => {
-			await mailer.sendMail({
-				from: '"NAME" <dndevops@company.com>',
-				to: email,
-				subject: subject,
-				text: message, // plain‑text body
-			});
-		});
-	})
-}){};*/
-
-/*
-export class IdentityService extends Effect.Service<IdentityService>()("@dndevops/IdentityService", {
-	dependencies: [ IdentityDataService.Default, MailService.Default ],
-	effect: Effect.gen(function*() {
-		const data = yield* IdentityDataService;
-
-		const sendMail = yield* MailService;
-
-		return {
-			requestRefreshToken: (email: string) => Effect.gen(function*() {
-				const exists = yield* data.userExists(email);
-
-				if(!exists)
-					return yield* Effect.fail(new UserNotFoundError);
-
-				const digits = Array.from({ length: 5}, () => Math.floor(Math.random() * 10))
-				const nonce = digits.join("");
-
-				const now = yield* DateTime.now;
-				const expiresAt = DateTime.add(now, { minutes: 10});
-
-				yield* data.storeRefreshNonce(email, nonce, expiresAt);
-
-				yield* sendMail(email, "DNDevOps Login", nonce);
-			}),
-
-			getRefreshToken: (email: string, nonce: string) => Effect.gen(function*() {
-				const n = yield* data.getRefreshNonce(email);
-
-				if (n != nonce)
-					return yield* new UnauthorizedError;
-
-				//Make refresh token
-				const refreshToken = "xxx";
-
-				yield* data.storeRefreshToken(email, refreshToken);
-				return refreshToken;
-			}),
-
-			getAccessToken: (refreshToken: string) => Effect.gen(function*() {
-
-				let decoded: {[key: string]: any};
-				try {
-					decoded = jwt.verify(refreshToken, 'shhhhh') as any;
-				} catch {
-					return yield* new UnauthorizedError;
-				}
-
-				const email = decoded.email;
-
-				const tokens = yield* data.getRefreshTokens(email);
-
-				if(!tokens.includes(refreshToken))
-					return yield* new UnauthorizedError;
-
-				const teams = yield* data.getTeamsByUser(email);
-				const now = yield* DateTime.now;
-
-				const payload = {
-					email,
-					exp: DateTime.add(now, { minutes: 10 }),
-					teams
-				};
-
-				const accessToken = "yyy";
-
-				return accessToken;
-			}),
-		};
-	})
-}){};
-
-*/
-/*
-class IdentityStorageService extends Context.Tag("IdentityStorageService")<
-	IdentityStorageService, 
-	{
-		readonly userExists: (email: string) => Effect.Effect<boolean>;
-		
-		readonly addRefreshKeyToUser: (email: string) => Effect.Effect<void>;
-		//readonly createTeam: (id: string, displayName: string)
-
-}>(){};
-export class IdentityService extends Context.Tag("IdentityService")<
-	IdentityService,
-	{
-		readonly sendRefreshToken: (email: string) => Effect.Effect<void, MissingUserError>;
-		readonly getAccessToken: (refresh: string) => Effect.Effect<string>;
-		readonly getRefreshToken: (email: string, nonce: string) => Effect.Effect<string, InvalidPermissionsError>;
-
-		//readonly signMeOut: (email: string) => Effect.Effect<void, MissingUserError>;
-		readonly createTeam: (p: Principal, id: string) => Effect.Effect<void, InvalidPermissionsError | DuplicateTeamError>;
-		readonly deleteTeam: (p: Principal, id: string) => Effect.Effect<void, InvalidPermissionsError | MissingTeamError>;
-
-		readonly assignUserToTeam: (p: Principal, user: string, team: string) => Effect.Effect<void, InvalidPermissionsError | MissingUserError | MissingTeamError>;
-		readonly removeUserFromTeam: (p: Principal, user: string, team: string) => Effect.Effect<void, InvalidPermissionsError | MissingUserError | MissingTeamError>;
-	}>() {
-	static readonly Live = IdentityService.of({
-		sendRefreshToken: (email: string) => Effect.gen(function* () {
-			return yield* Effect.fail(new MissingUserError());
-		}),
-		getAccessToken: function (email: string): Effect.Effect<string> {
-			throw new Error("Function not implemented.");
-		},
-		getRefreshToken: (email: string, nonce: string) => Effect.gen(function* () {
-			return yield* Effect.fail(new InvalidPermissionsError());
-		}),
-		createTeam: function (p: Principal, id: string) {
-			throw new Error("Function not implemented.");
-		},
-		deleteTeam: function (p: Principal, id: string) {
-			throw new Error("Function not implemented.");
-		},
-		assignUserToTeam: function (p: Principal, user: string, team: string) {
-			throw new Error("Function not implemented.");
-		},
-		removeUserFromTeam: function (p: Principal, user: string, team: string) {
-			throw new Error("Function not implemented.");
-		}
-	});
-};*/
