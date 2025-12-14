@@ -1,0 +1,63 @@
+services:
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - dndevops-internal-net
+  
+  redis:
+    image: redis:8.4.0
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    volumes:
+      - ./redis.conf:/etc/redis/redis.conf
+    networks:
+      - dndevops-internal-net
+
+  rabbitmq:
+    image: rabbitmq:4.2.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: carrot
+    networks:
+      - dndevops-internal-net
+
+  mailpit:
+    image: axllent/mailpit:latest
+    networks:
+      - dndevops-internal-net
+
+  db:
+    image: postgres:18.1
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dndevops
+    volumes:
+      - ./persistency/dndevops-game-db:/var/lib/postgresql
+    networks:
+      - dndevops-internal-net
+
+  # App
+  dndevops:
+    image: dndevops:latest
+    environment:
+      REDIS_URI: redis://service:password@redis
+      AMQP_URI: amqp://rabbit:carrot@rabbitmq
+      POSTGRESQL_URI: postgres://user:password@db/dndevops
+    networks:
+      - dndevops-internal-net
+
+  
+  
+
+networks:
+  dndevops-internal-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

@@ -1,0 +1,37 @@
+{
+	"name": "@dndevops/domain",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		"./api": {
+			"import": "./dist/api.js"
+		},
+		"./identity": {
+			"import": "./dist/identity.js"
+		},
+		"./errors": {
+			"import": "./dist/errors.js"
+		}
+	},
+	"scripts": {
+		"clean": "rimraf dist tsconfig.tsbuildinfo",
+		"build": "tsc --build",
+		"check": "tsc --build && eslint src --config eslint.config.mjs"
+	},
+	"dependencies": {
+		"@effect/platform": "catalog:",
+		"effect": "catalog:",
+		"uuid": "^13.0.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "catalog:",
+		"@types/node": "catalog:",
+		"eslint": "catalog:",
+		"eslint-plugin-only-warn": "catalog:",
+		"rimraf": "catalog:",
+		"typescript": "catalog:",
+		"typescript-eslint": "catalog:"
+	}
+}

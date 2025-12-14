@@ -1,8 +1,6 @@
 packages:
-  - apps/*
-  - modules/*
-  - libraries/*
-
+  - packages/*
+  
 catalog:
   '@effect/platform': 0.93.3
   '@eslint/js': 9.39.1

@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "ES2024",
+
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        
+        "lib": [ "ES2024" ],
+        
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+
+        "strict": true,
+        "exactOptionalPropertyTypes": true,
+        "skipLibCheck": true,
+
+        "composite": true,
+        "plugins": [ { "name": "@effect/language-service" } ]
+    },
+    "exclude": [ "node_modules" ]
+}

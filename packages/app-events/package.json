@@ -1,0 +1,35 @@
+{
+	"name": "@dndevops/app-events",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"main": "dist/index.js",
+	"scripts": {
+		"clean": "rimraf dist tsconfig.tsbuildinfo",
+		"build": "tsc --build && node build.mjs",
+		"start": "node .",
+		"dev": "tsx src/index.ts",
+		"check": "tsc --build && eslint src --config eslint.config.mjs"
+	},
+	"dependencies": {
+		"@dndevops/domain": "workspace:*",
+		"@dndevops/module-identity": "workspace:*",
+		"@effect/platform": "catalog:",
+		"@effect/platform-node": "^0.100.0",
+		"@types/amqplib": "^0.10.8",
+		"amqplib": "^0.10.9",
+		"effect": "catalog:"
+	},
+	"devDependencies": {
+		"@eslint/js": "catalog:",
+		"@types/node": "catalog:",
+		"@types/nodemailer": "^7.0.4",
+		"esbuild": "catalog:",
+		"eslint": "catalog:",
+		"eslint-plugin-only-warn": "catalog:",
+		"rimraf": "catalog:",
+		"tsx": "^4.20.6",
+		"typescript": "catalog:",
+		"typescript-eslint": "catalog:"
+	}
+}

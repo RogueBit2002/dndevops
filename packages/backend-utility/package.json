@@ -1,0 +1,39 @@
+{
+	"name": "@dndevops/backend-utility",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		"./effect": {
+			"import": "./dist/effect.js"
+		}
+	},
+	"scripts": {
+		"clean": "rimraf dist tsconfig.tsbuildinfo",
+		"build": "tsc --build",
+		"check": "tsc --build && eslint src --config eslint.config.mjs"
+	},
+	"dependencies": {
+		"@effect/platform": "catalog:",
+		"@redis/bloom": "^5.10.0",
+		"@redis/client": "^5.10.0",
+		"@redis/json": "^5.10.0",
+		"@redis/search": "^5.10.0",
+		"@redis/time-series": "^5.10.0",
+		"amqplib": "^0.10.9",
+		"effect": "catalog:",
+		"redis": "^5.10.0",
+		"uuid": "^13.0.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "catalog:",
+		"@types/amqplib": "^0.10.8",
+		"@types/node": "catalog:",
+		"eslint": "catalog:",
+		"eslint-plugin-only-warn": "catalog:",
+		"rimraf": "catalog:",
+		"typescript": "catalog:",
+		"typescript-eslint": "catalog:"
+	}
+}

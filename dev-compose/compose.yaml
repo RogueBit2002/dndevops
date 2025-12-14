@@ -1,0 +1,56 @@
+services:  
+  redis:
+    image: redis:8.4.0
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    volumes:
+      - ./redis.conf:/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    networks:
+      - dev-net
+
+
+  rabbitmq:
+    image: rabbitmq:4.2.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: service
+      RABBITMQ_DEFAULT_PASS: password
+    ports:
+      - "5672:5672"
+    networks:
+      - dev-net
+
+  db:
+    image: postgres:18.1
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: service
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dndevops
+    volumes:
+      - ./persistency/dndevops-game-db:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    networks:
+      - dev-net
+
+  app:
+    image: dndevops:latest
+    environment:
+      POSTGRESQL_URI: postgresql://service:password@db/dndevops
+      REDIS_URI: redis://service:password@redis
+      AMQP_URI: amqp://service:password@rabbitmq
+      HTTP_ADDRESS: 0.0.0.0
+      HTTP_PORT: 3000
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    networks:
+      - dev-net
+    
+networks:
+  dev-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
