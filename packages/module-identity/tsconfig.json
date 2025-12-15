@@ -7,6 +7,6 @@
     "include": [ "src/**/*.ts" ],
     "references": [
         { "path": "../domain" },
-        { "path": "../backend-utility" },
+        { "path": "../backend-core" },
     ]
 }

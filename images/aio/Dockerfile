@@ -1,9 +1,10 @@
 FROM ubuntu:25.10 AS base
 
-RUN apt update && apt install -y nodejs npm iputils-ping wget
-
+RUN apt update && apt install -y iputils-ping wget
 
 FROM base AS builder
+
+RUN apt install -y npm
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -24,13 +25,9 @@ RUN pnpm -r --filter=@dndevops/app-* run build
 
 FROM base AS runtime
 
-# Caddy
-
-
 RUN wget https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_linux_amd64.deb && dpkg -i caddy_2.10.2_linux_amd64.deb
 
 RUN apt install -y supervisor
-# RUN systemctl stop --now caddy && systemctl disable --now caddy
 
 RUN mkdir -p /var/log/supervisor
 

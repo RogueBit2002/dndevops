@@ -1,10 +1,11 @@
 // RedisService
 
-import { Config, Effect, Redacted } from "effect";
+import { Config, Effect, Redacted, Option } from "effect";
 
 import * as amqp from "amqplib";
 import mongoose from 'mongoose';
 import { createTransport } from "nodemailer";
+import { drizzle } from "drizzle-orm/node-postgres";
 
 export class AppConfig extends Effect.Service<AppConfig>()("@dndevops/AppConfig", {
     effect: Effect.gen(function*() {
@@ -19,8 +20,10 @@ export class AppConfig extends Effect.Service<AppConfig>()("@dndevops/AppConfig"
 export class RuntimeConfig extends Effect.Service<RuntimeConfig>()("@dndevops/RuntimeConfig", {
     effect: Effect.gen(function*() {
         return {
-            mongodb_uri: yield* Config.redacted("DNDEVOPS_MONGODB_URI"),
-            amqp_uri: yield* Config.redacted("DNDEVOPS_AMQP_URI"),
+            mongodb_uri: yield* Config.option(Config.redacted("DNDEVOPS_MONGODB_URI")),
+            //postgres_uri: yield* Config.redacted("DNDEVOPS_POSTGRES_URI").pipe(Config.withDefault("XXX")),
+            redis_uri: yield* Config.redacted("DNDEVOPS_REDIS_URI").pipe(Config.withDefault("XXX")),
+            amqp_uri: yield* Config.redacted("DNDEVOPS_AMQP_URI").pipe(Config.withDefault("XXX")),
             http: {
                 address: yield* Config.string("DNDEVOPS_HTTP_ADDRESS").pipe(Config.withDefault("0.0.0.0")),
                 port: yield* Config.string("DNDVEVOPS_HTTP_PORT").pipe(Config.withDefault(3000))
@@ -59,25 +62,10 @@ export class AMQPService extends Effect.Service<AMQPService>()("@dndevops/AMQPSe
 export class MailService extends Effect.Service<MailService>()("@dndevops/MailService", {
     dependencies: [ RuntimeConfig.Default ],
     effect: Effect.gen(function*() {
-
-        /*const mailer = createTransport({
-			host: "mailpit",
-			port: 1025 ,
-			secure: false, // true for 465, false for other ports
-			auth: {
-				user: "login@doesnt.matter",
-				pass: "beepboop",
-			},
-		});*/
         
         const runtimeConfig = yield* RuntimeConfig;
 
-        //const mailer = createTransport(Redacted.value(runtimeConfig.smtp.uri));
-        const mailer = createTransport({
-            host: "127.0.0.1",
-            port: 1025,
-            secure: false
-        });
+        const mailer = createTransport(Redacted.value(runtimeConfig.smtp.uri));
         
         return {
             send: Effect.fn(function*(to: string | string[], subject: string, content: string) {
@@ -87,17 +75,35 @@ export class MailService extends Effect.Service<MailService>()("@dndevops/MailSe
         };
     })
 }) {};
-export class MongooseService extends Effect.Service<MongooseService>()("@dndevops/MongooseService", {
+
+export class DrizzleService extends Effect.Service<DrizzleService>()("@dndevops/DrizzleService", {
+	dependencies: [ RuntimeConfig.Default ],
+	effect: Effect.gen(function*() {
+
+		const uri = yield* Config.redacted("DNDEVOPS_POSTGRES_URI");
+	
+		const db = drizzle(Redacted.value(uri));
+
+		// TODO: Test connection
+		
+		return {
+			//use: Effect.fn(function*(callback: (db: )))
+		}
+	})
+}) {};
+
+/*export class MongooseService extends Effect.Service<MongooseService>()("@dndevops/MongooseService", {
     dependencies: [ RuntimeConfig.Default ],
     effect: Effect.scoped(Effect.gen(function*() {
 
         const runtimeConfig = yield* RuntimeConfig;
 
-        const connection = yield* Effect.promise(async() => mongoose.createConnection(Redacted.value(runtimeConfig.mongodb_uri)));
+		if(Option.isNone(runtimeConfig.mongodb_uri))
+			throw "No monbodb uri provided";
 
-        mongoose.connect(Redacted.value(runtimeConfig.mongodb_uri). {
-            
-        });
+		const uri = runtimeConfig.mongodb_uri.value;
+        const connection = yield* Effect.promise(async() => mongoose.createConnection(Redacted.value(uri)));
+
         yield* Effect.addFinalizer((exit) => Effect.promise(async () => connection.close()));
 
         return {
@@ -108,4 +114,4 @@ export class MongooseService extends Effect.Service<MongooseService>()("@dndevop
             })
         }
     }))
-}){};
+}){};*/

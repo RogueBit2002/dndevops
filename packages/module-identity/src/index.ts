@@ -9,24 +9,24 @@ import { SqlClient } from "@effect/sql";
 import { Principal, TeamData, TeamID } from "@dndevops/domain/identity";
 import { InvalidDataError, InvalidPermissionsError, TeamNotFoundError, UnauthorizedError, UserNotFoundError } from "@dndevops/domain/errors";
 
-import { MongooseService, AppConfig, MailService } from "@dndevops/backend-utility/effect";
+import { AppConfig, MailService } from "@dndevops/backend-core/effect";
 
 import mongoose from "mongoose";
 import * as uuid from "uuid";
 
 
-const NONCE_DURATION = 5 * 60;
-const REFRESH_DURATION = 7 * 24 * 60 * 60;
-const ACCESS_DURATION = 5 * 60;
+//const NONCE_DURATION = 5 * 60;
+//const REFRESH_DURATION = 7 * 24 * 60 * 60;
+//const ACCESS_DURATION = 5 * 60;
 
 class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAccass", {
-	dependencies: [ MongooseService.Default ],
+	dependencies: [ ],
 	effect: Effect.gen(function*() {
 	
-		const mgoose = yield* MongooseService;
+		//const mgoose = yield* MongooseService;
 
 
-		const teamSchema = new mongoose.Schema({
+		/*const teamSchema = new mongoose.Schema({
 			uuid: {
 				type: String,
 				required: true,
@@ -63,28 +63,32 @@ class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAc
 		const Nonce = yield* mgoose.use(async (conn) => mongoose.model('Nonce', nonceSchema));
 
 		console.log(Nonce);
-		//const UserIdentity = yield* mgoose.use(async (conn))
+		//const UserIdentity = yield* mgoose.use(async (conn))*/
+
 		return {
 			userExists: Effect.fn(function*(email: string) { 
-				return (yield* Effect.promise(() => Team.countDocuments({ members: email }))) > 0;
+				return false; //return (yield* Effect.promise(() => Team.countDocuments({ members: email }))) > 0;
 			}),
 			addRefreshNonceToUser: Effect.fn(function*(email: string, nonce: string) {
 				//yield* mongoose.use((client) => client.set(`identity/${email}.nonce.${nonce}`, "foo", { expiration: { type: "PXAT", value: expiresAt.epochMillis }}));
 
-				const nonceEntry = new Nonce({
+				/*const nonceEntry = new Nonce({
 					email: email,
 					nonce: nonce
 				});
 
-				yield* Effect.promise(() => nonceEntry.save());
+				yield* Effect.promise(() => nonceEntry.save());*/
 			}),
 			consumeRefreshNonce: Effect.fn(function*(email: string, nonce: string) {
-				const entry = yield* mgoose.use(async (conn) => Nonce.deleteMany({ email, nonce }))
+				/*const entry = yield* mgoose.use(async (conn) => Nonce.deleteMany({ email, nonce }))
 
 				if(entry.deletedCount === 0)
 					return false;
 
-				return true;
+				return true;*/
+
+				return false;
+
 				/*const key = `identity/${email}.noncen.${nonce}`;
 				const count = yield* redis.use((client) => client.exists(key));
 
@@ -99,7 +103,9 @@ class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAc
 				// TODO: Create team
 
 				const id = uuid.v4();
-				const team = new Team({
+
+				return id;
+				/*const team = new Team({
 					uuid: id,
 					displayName,
 					members: []
@@ -107,7 +113,7 @@ class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAc
 				
 				yield* Effect.promise(() => team.save());
 
-				return id;
+				return id;*/
 			}),
 			deleteTeam: Effect.fn(function*(id: string) {
 				// TODO: Delete team;
@@ -115,16 +121,18 @@ class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAc
 			teamExists: Effect.fn(function*(id: TeamID) {
 				// TODO: Check team
 
-				const result = yield* mgoose.use(async conn => Team.findOne({ uuid: id }));
+				/*const result = yield* mgoose.use(async conn => Team.findOne({ uuid: id }));
 				
 				if(result === null)
 					return false;
 
-				return true;
+				return true;*/
+
+				return false;
 			}),
 
 			updateTeam: Effect.fn(function*(id: string, displayName: string) {
-				yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id }, { $set: { displayName } }));
+				//yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id }, { $set: { displayName } }));
 			}),
 			getTeamsByUser: Effect.fn(function*(email: string) { 
 				/*
@@ -153,38 +161,47 @@ class DataAccess extends Effect.Service<DataAccess>()("@dndevops/Identity_DataAc
 				// Extract the 'nonce' values from the result
 				const nonces = result.map(doc => doc.nonce);*/
 
-				const teams = yield* Effect.promise(() => Team.find({ members: email }));
+				/*const teams = yield* Effect.promise(() => Team.find({ members: email }));
 
-				return teams.map(t => t.uuid) as TeamID[];
+				return teams.map(t => t.uuid) as TeamID[];*/
+
+				return [] as TeamID[];
 
 			}),
 			getTeams: Effect.fn(function*() {
-				const ids = yield* Effect.promise(() => Team.distinct("uuid"));
+				/*const ids = yield* Effect.promise(() => Team.distinct("uuid"));
 
-				return ids as TeamID[];
+				return ids as TeamID[];*/
+
+				return [] as TeamID[];
 			}),
 			getTeam: Effect.fn(function*(id: TeamID) {
-				const d = yield* Effect.promise(() => Team.findOne({ uuid: id }));
+				/*const d = yield* Effect.promise(() => Team.findOne({ uuid: id }));
 
 				if(d === null)
 					throw "Team not found";
 
 
-				return { id: d.uuid, displayName: d.displayName, members: d.members } as ({id: TeamID} & TeamData);
+				return { id: d.uuid, displayName: d.displayName, members: d.members } as ({id: TeamID} & TeamData);*/
+
+				return { id: "", displayName: "", members: [] } as ({id: TeamID} & TeamData);
+
 			}),
 			assignUserToTeam: Effect.fn(function*(email: string, id: TeamID) {
-				yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id}, {
+				/*yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id}, {
 					$addToSet: {
 						members: email
 					}
-				}));
+				}));*/
+
+
 			}),
 			removeUserFromTeam: Effect.fn(function*(email: string, id: TeamID) {
-				yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id}, {
+				/*yield* mgoose.use(async conn => Team.findOneAndUpdate({ uuid: id}, {
 					$pull: {
 						members: email
 					}
-				}));
+				}));*/
 			}),
 		}
 	})

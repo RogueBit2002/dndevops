@@ -1,19 +1,24 @@
 packages:
   - packages/*
-  
+
 catalog:
   '@effect/platform': 0.93.3
   '@eslint/js': 9.39.1
   '@types/node': ^24.9.2
+  '@types/pg': ^8.16.0
+  amqplib: ^0.10.9
+  drizzle-kit: ^0.31.8
+  drizzle-orm: ^0.45.1
   effect: 3.19.4
   esbuild: ^0.25.11
   eslint: 9.39.1
   eslint-plugin-only-warn: 1.1.0
+  mongoose: ^9.0.1
+  pg: ^8.16.3
   rimraf: ^6.0.1
+  tsx: ^4.20.6
   typescript: 5.9.3
   typescript-eslint: 8.48.1
-  mongoose: ^9.0.1
-  amqplib: ^0.10.9
   uuid: ^13.0.0
 
 injectWorkspacePackages: true

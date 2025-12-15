@@ -16,7 +16,7 @@
 	},
 	"dependencies": {
 		"@dndevops/domain": "workspace:^",
-		"@dndevops/backend-utility": "workspace:^",
+		"@dndevops/backend-core": "workspace:^",
 		"@effect/sql": "^0.48.6",
 		"@effect/sql-pg": "^0.49.7",
 		"effect": "catalog:",
