@@ -5,7 +5,8 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
-		"build": "tsc --build && node ../../scripts/bundle-backend.mjs"
+		"build": "tsc --build && node ../../scripts/bundle-backend.mjs",
+		"check": "eslint src --config ../../eslint.config.mjs"
 	},
 	"dependencies": {
 		"@dndevops/domain": "workspace:"

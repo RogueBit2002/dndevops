@@ -1,11 +1,14 @@
 {
 	"private": true,
 	"version": "0.0.1",
-
 	"devDependencies": {
-		"esbuild": "catalog:",
-		"typescript": "catalog:",
 		"@types/node": "catalog:",
-		"rimraf": "catalog:"
+		"esbuild": "catalog:",
+		"rimraf": "catalog:",
+		"typescript": "catalog:",
+		"eslint": "^9.39.2",
+		"@eslint/js": "9.39.1",
+		"typescript-eslint": "8.48.1",
+		"eslint-plugin-only-warn": "1.1.0"
 	}
 }
