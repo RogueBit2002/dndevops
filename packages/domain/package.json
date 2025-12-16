@@ -1,0 +1,17 @@
+{
+	"name": "@dndevops/domain",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"clean": "rimraf dist tsconfig.tsbuildinfo",
+		"build": "tsc --build",
+		"check": "eslint src --config eslint.config.mjs"
+	}
+}

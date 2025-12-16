@@ -1,0 +1,13 @@
+{
+	"name": "@dndevops/app-frontend",
+	"private": true,
+	"type": "module",
+	"main": "dist/index.js",
+	"scripts": {
+		"clean": "rimraf dist tsconfig.tsbuildinfo",
+		"build": "tsc --build && node ../../scripts/bundle-backend.mjs"
+	},
+	"dependencies": {
+		"@dndevops/domain": "workspace:"
+	}
+}

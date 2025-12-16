@@ -1,0 +1,14 @@
+packages:
+  - packages/*
+
+catalog:
+  '@types/node': ^24.9.2
+  effect: ^3.19.3
+  esbuild: ^0.25.12
+  rimraf: ^6.0.1
+  typescript: ^5.9.3
+
+injectWorkspacePackages: true
+
+onlyBuiltDependencies:
+  - esbuild

@@ -1,0 +1,11 @@
+{
+	"private": true,
+	"version": "0.0.1",
+
+	"devDependencies": {
+		"esbuild": "catalog:",
+		"typescript": "catalog:",
+		"@types/node": "catalog:",
+		"rimraf": "catalog:"
+	}
+}

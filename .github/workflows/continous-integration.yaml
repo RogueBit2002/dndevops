@@ -1,0 +1,33 @@
+name: Continous Integration
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - main
+      - development
+
+jobs:
+  Run-CI:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v5
+      - name: Install nixpkgs
+        uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-25.11
+      - name: Pre-process dev shell
+        run: nix build --no-link .#devShells.$(nix eval --impure --raw --expr 'builtins.currentSystem').default
+      - name: Install dependencies
+        run: nix develop . --command pnpm install --frozen-lockfile
+      - name: Build applications
+        run: nix develop . --command pnpm -r --filter=@dndevops/app-* run build
+      - name: Run checks on all packages
+        run: nix develop . --command pnpm -r run check
+      - name: Create image
+        run: docker build --file images/packed/Dockerfile . --tag:dndevops:latest
+      

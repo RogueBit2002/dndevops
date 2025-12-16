@@ -1,0 +1,10 @@
+http://localhost:8000 {
+    
+	handle_path /api/* {
+		reverse_proxy /identity/* 127.0.0.1:3000
+		reverse_proxy /game/* 127.0.0.1:3001
+		reverse_proxy /events/* 127.0.0.1:3002
+	}
+
+	reverse_proxy 127.0.0.1:3003
+}
