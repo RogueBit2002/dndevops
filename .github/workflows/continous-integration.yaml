@@ -41,7 +41,7 @@ jobs:
       - name: Generate tag
         id: docker-tag
         run: |
-          echo "VERSION=$(cat package.json | jq '.version')" >> $GITHUB_OUTPUT
+          echo "VERSION=$(cat package.json | jq -r '.version')" >> $GITHUB_OUTPUT
           if [[ "${GITHUB_REF_NAME}" == "development" ]]; then
             echo "TAG=dev" >> $GITHUB_OUTPUT
             echo "SUFFIX=-dev" >> $GITHUB_OUTPUT
