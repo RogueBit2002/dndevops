@@ -29,5 +29,5 @@ jobs:
       - name: Run checks on all packages
         run: nix develop . --command pnpm -r run check
       - name: Create image
-        run: docker build --file images/packed/Dockerfile . --tag:dndevops:latest
+        run: docker build --file images/packed/Dockerfile . --tag dndevops:latest
       
