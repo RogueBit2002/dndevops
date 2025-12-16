@@ -15,7 +15,7 @@
 			bun
 		];
 	in {
-		devShell.${system} = pkgs.mkShell {
+		devShells.${system}.default = pkgs.mkShell {
 			name = "dndevops";
 			
 			inherit packages;
