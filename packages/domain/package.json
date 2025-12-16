@@ -18,7 +18,7 @@
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
 		"build": "tsc --build",
-		"check": "tsc --build && eslint src --config eslint.config.mjs"
+		"check": "eslint src --config eslint.config.mjs"
 	},
 	"dependencies": {
 		"@effect/platform": "catalog:",

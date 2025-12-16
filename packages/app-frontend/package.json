@@ -8,7 +8,7 @@
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
 		"build": "tsc --build && node build.mjs",
 		"start": "node .",
-		"check": "tsc --build && eslint src --config eslint.config.mjs"
+		"check": "eslint src --config eslint.config.mjs"
 	},
 	"devDependencies": {
 		"@eslint/js": "catalog:",

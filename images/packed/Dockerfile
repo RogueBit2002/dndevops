@@ -1,16 +1,11 @@
-FROM ubuntu:25.10 AS base
+FROM alpine:3.23.0 AS base
 
-RUN apt update && apt install -y iputils-ping wget
+RUN apk update && apk add nodejs
+
 
 FROM base AS builder
 
-RUN apt install -y npm
-
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-
-RUN npm install --global corepack@latest
-RUN corepack enable pnpm
+RUN apk add pnpm
 
 WORKDIR /workspace
 
@@ -19,17 +14,15 @@ COPY package.json package.json
 COPY pnpm-workspace.yaml pnpm-workspace.yaml
 COPY pnpm-lock.yaml pnpm-lock.yaml
 COPY tsconfig.root.json tsconfig.root.json
+
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm -r --filter=@dndevops/app-* run build
 
 
+
 FROM base AS runtime
 
-RUN wget https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_linux_amd64.deb && dpkg -i caddy_2.10.2_linux_amd64.deb
-
-RUN apt install -y supervisor
-
-RUN mkdir -p /var/log/supervisor
+RUN apk add caddy supervisor
 
 WORKDIR /app
 
@@ -45,7 +38,7 @@ COPY --from=builder /workspace/packages/app-game/package.json packages/app-game/
 COPY --from=builder /workspace/packages/app-events/dist packages/app-events/dist
 COPY --from=builder /workspace/packages/app-events/package.json packages/app-events/package.json
 
-COPY images/aio/supervisord.conf supervisord.conf
-COPY images/aio/Caddyfile Caddyfile
+COPY images/packed/supervisord.conf supervisord.conf
+COPY images/packed/Caddyfile Caddyfile
 
 CMD ["/usr/bin/supervisord", "--configuration=/app/supervisord.conf"]

@@ -18,10 +18,10 @@ export class DrizzleService extends Context.Tag("@dndevops/DrizzleService")<
 			});
 		}), (pool) => Effect.promise(() => pool.end()));
 
-		yield* Effect.tryPromise(() => pool.query("SELECT 1")).pipe(
+		/*yield* Effect.tryPromise(() => pool.query("SELECT 1")).pipe(
 			Effect.retry(Schedule.jitteredWith(Schedule.spaced("1.25 seconds"), { min: 0.5, max: 1.5})).pipe(Schedule.tapOutput),
 			Effect.orDie
-		);
+		);*/
 
 		const db = drizzle(uri);
 

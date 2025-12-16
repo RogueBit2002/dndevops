@@ -9,7 +9,7 @@
 		"build": "tsc --build && node build.mjs",
 		"start": "node .",
 		"dev": "tsx src/index.ts",
-		"check": "tsc -p ./tsconfig.json --build && eslint src --config eslint.config.mjs"
+		"check": "eslint src --config eslint.config.mjs"
 	},
 	"dependencies": {
 		"@dndevops/domain": "workspace:*",

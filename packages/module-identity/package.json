@@ -12,26 +12,28 @@
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
 		"build": "tsc --build",
-		"check": "tsc --build && eslint src --config eslint.config.mjs"
+		"check": "eslint src --config eslint.config.mjs && secretlint src/**"
 	},
 	"dependencies": {
-		"@dndevops/domain": "workspace:^",
 		"@dndevops/backend-core": "workspace:^",
+		"@dndevops/domain": "workspace:^",
 		"@effect/sql": "^0.48.6",
 		"@effect/sql-pg": "^0.49.7",
 		"effect": "catalog:",
 		"jsonwebtoken": "^9.0.3",
+		"mongoose": "catalog:",
 		"nodemailer": "^7.0.10",
-		"uuid": "catalog:",
-		"mongoose": "catalog:"
+		"uuid": "catalog:"
 	},
 	"devDependencies": {
 		"@eslint/js": "catalog:",
+		"@secretlint/secretlint-rule-preset-recommend": "catalog:",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/node": "catalog:",
 		"eslint": "catalog:",
 		"eslint-plugin-only-warn": "catalog:",
 		"rimraf": "catalog:",
+		"secretlint": "catalog:",
 		"typescript": "catalog:",
 		"typescript-eslint": "catalog:"
 	}

@@ -4,6 +4,7 @@ packages:
 catalog:
   '@effect/platform': 0.93.3
   '@eslint/js': 9.39.1
+  '@secretlint/secretlint-rule-preset-recommend': ^11.2.5
   '@types/node': ^24.9.2
   '@types/pg': ^8.16.0
   amqplib: ^0.10.9
@@ -16,6 +17,7 @@ catalog:
   mongoose: ^9.0.1
   pg: ^8.16.3
   rimraf: ^6.0.1
+  secretlint: ^11.2.5
   tsx: ^4.20.6
   typescript: 5.9.3
   typescript-eslint: 8.48.1
