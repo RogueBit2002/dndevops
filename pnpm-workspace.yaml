@@ -2,11 +2,13 @@ packages:
   - packages/*
 
 catalog:
+  '@effect/platform': 0.93.8
   '@types/node': ^24.9.2
-  effect: ^3.19.3
+  effect: ^3.19.12
   esbuild: ^0.25.12
   rimraf: ^6.0.1
   typescript: ^5.9.3
+  uuid: ^13.0.0
 
 injectWorkspacePackages: true
 

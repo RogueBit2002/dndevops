@@ -7,11 +7,18 @@
 	"exports": {
 		".": {
 			"import": "./dist/index.js"
+		},
+		"./api": {
+			"import": "./dist/api.js"
 		}
 	},
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
 		"build": "tsc --build",
 		"check": "eslint src --config ../../eslint.config.mjs"
+	},
+	"dependencies": {
+		"@effect/platform": "catalog:",
+		"effect": "catalog:"
 	}
 }
