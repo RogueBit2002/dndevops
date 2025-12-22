@@ -10,6 +10,12 @@
 		},
 		"./api": {
 			"import": "./dist/api.js"
+		},
+		"./errors": {
+			"import": "./dist/errors.js"
+		},
+		"./identity": {
+			"import": "./dist/identity.js"
 		}
 	},
 	"scripts": {

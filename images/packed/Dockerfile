@@ -9,10 +9,10 @@ RUN apk add pnpm
 
 WORKDIR /workspace
 
-COPY package.json package.json
-COPY pnpm-lock.yaml pnpm-lock.yaml
-COPY pnpm-workspace.yaml pnpm-workspace.yaml
-COPY tsconfig.root.json tsconfig.root.json
+COPY package.json .
+COPY pnpm-lock.yaml .
+COPY pnpm-workspace.yaml .
+COPY tsconfig.root.json .
 COPY packages packages
 COPY scripts scripts
 
@@ -21,12 +21,16 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm -r --filter=@dndevops/app-* run build
 
 
-
 FROM base AS runtime
 
 RUN apk add caddy supervisor
 
 WORKDIR /app
+
+COPY --chmod=0755 images/packed/launcher.sh .
+COPY images/packed/supervisord.conf .
+COPY images/packed/Caddyfile .
+
 
 COPY --from=builder /workspace/packages/app-frontend/dist packages/app-frontend/dist
 COPY --from=builder /workspace/packages/app-frontend/package.json packages/app-frontend/package.json
@@ -40,7 +44,5 @@ COPY --from=builder /workspace/packages/app-game/package.json packages/app-game/
 COPY --from=builder /workspace/packages/app-events/dist packages/app-events/dist
 COPY --from=builder /workspace/packages/app-events/package.json packages/app-events/package.json
 
-COPY images/packed/supervisord.conf supervisord.conf
-COPY images/packed/Caddyfile Caddyfile
-
-CMD ["/usr/bin/supervisord", "--configuration=/app/supervisord.conf"]
+# CMD ["/usr/bin/supervisord", "--configuration=/app/supervisord.conf"]
+CMD [ "/app/launcher.sh" ]

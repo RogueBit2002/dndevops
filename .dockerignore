@@ -1,2 +1,5 @@
 /.github
 node_modules
+.env
+dist
+tsconfig.tsbuildinfo

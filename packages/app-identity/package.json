@@ -6,9 +6,18 @@
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
 		"build": "tsc --build && node ../../scripts/bundle-backend.mjs",
-		"check": "eslint src --config ../../eslint.config.mjs"
+		"check": "eslint src --config ../../eslint.config.mjs",
+		"start": "node --env-file=.env ."
 	},
 	"dependencies": {
-		"@dndevops/domain": "workspace:"
+		"@dndevops/backend-core": "workspace:",
+		"@dndevops/domain": "workspace:",
+		"@effect/platform-node": "^0.104.0",
+		"drizzle-orm": "catalog:",
+		"effect": "catalog:",
+		"pg": "catalog:"
+	},
+	"devDependencies": {
+		"@types/pg": "catalog:"
 	}
 }
