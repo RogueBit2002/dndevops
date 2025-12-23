@@ -42,18 +42,25 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 
 		const encoded = headers.authorization.substring("Basic ".length);
 
-		const decoded = btoa(encoded);
+		console.log(encoded);
+		const decoded = atob(encoded);
 
-		const [ email, nonce ] = decoded.split(":");
+		
+		console.log(decoded);
+		const [ email, code ] = decoded.split(":");
 
-		if(email == undefined || nonce == undefined)
+		console.log(`email: ${email} || code: ${code}`);
+
+		if(email == undefined || code == undefined)
 			return yield*  new UnauthorizedError;
 
-		const either = yield* Effect.either(authService.getRefreshToken(email, nonce));
+		
+		const either = yield* Effect.either(authService.getRefreshToken(email, code));
 
 		//Wtf is going on?? left is right and right is left????
 		if(Either.isRight(either))
 			return either.right;
+
 
 		return yield* new UnauthorizedError;
 	}))
@@ -80,12 +87,18 @@ const mailLayer = Layer.effect(
 	})
 );
 
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+
 const drizzleLayer = Layer.scoped(
 	DrizzleService,
 	Effect.gen(function*() {
 		const uri = yield* Config.string("DNDEVOPS_IDENTITY_POSTGRES_URI");
 
-		return yield* DrizzleService.make(uri);
+		const service = yield* DrizzleService.make(uri);
+
+		yield* service.use(async db => migrate(db, { migrationsFolder: "drizzle"}));
+
+		return service;
 	})
 );
 
@@ -105,6 +118,8 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
 	
 	Layer.provide(appLayer)
 );
+
+
 
 // Launch the server
 Layer.launch(HttpLive).pipe(NodeRuntime.runMain);

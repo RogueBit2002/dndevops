@@ -13,11 +13,15 @@
 		"@dndevops/backend-core": "workspace:",
 		"@dndevops/domain": "workspace:",
 		"@effect/platform-node": "^0.104.0",
+		"drizzle-kit": "catalog:",
 		"drizzle-orm": "catalog:",
 		"effect": "catalog:",
+		"jsonwebtoken": "catalog:",
 		"pg": "catalog:"
 	},
 	"devDependencies": {
-		"@types/pg": "catalog:"
+		"@types/jsonwebtoken": "catalog:",
+		"@types/pg": "catalog:",
+		"tsx": "catalog:"
 	}
 }

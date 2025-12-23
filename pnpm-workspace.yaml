@@ -3,13 +3,17 @@ packages:
 
 catalog:
   '@effect/platform': 0.93.8
+  '@types/jsonwebtoken': 9.0.10
   '@types/node': ^24.9.2
   '@types/pg': 8.16.0
+  drizzle-kit: 0.31.8
   drizzle-orm: 0.45.1
   effect: 3.19.12
   esbuild: ^0.25.12
+  jsonwebtoken: 9.0.3
   pg: 8.16.3
   rimraf: ^6.0.1
+  tsx: 4.21.0
   typescript: ^5.9.3
   uuid: ^13.0.0
 

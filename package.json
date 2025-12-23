@@ -13,6 +13,8 @@
 	},
 	"dependencies": {
 		"@effect/platform": "catalog:",
+		"@types/jsonwebtoken": "catalog:",
+		"jsonwebtoken": "catalog:",
 		"uuid": "catalog:"
 	}
 }

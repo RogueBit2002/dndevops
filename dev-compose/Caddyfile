@@ -1,0 +1,11 @@
+http://localhost:8000 {
+    reverse_proxy dndevops:8000
+}
+
+http://mailpit.localhost:8000 {
+    reverse_proxy mailpit:8025
+}
+
+http://rabbitmq.localhost:8000 {
+        reverse_proxy rabbitmq:15672
+}

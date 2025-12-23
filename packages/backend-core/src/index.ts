@@ -9,7 +9,10 @@ export class MailSender extends Context.Tag("@dndevops/backend-core/MailSender")
 		const transport = createTransport(uri);
 
 		return Effect.fn(function*(receiver: string | string[], subject: string, content: string) {
-			yield* Effect.promise(() => transport.sendMail({host:`<${sender}>`, to: receiver, subject, text: content}))
+			console.log("sending mail!");
+			yield* Effect.promise(() => transport.sendMail({from: `<${sender}>`, to: receiver, subject, text: content}));
+			
+			console.log("Sent the mail!");
 		});
 	});
 };
@@ -18,9 +21,11 @@ export class AppConfig extends Effect.Service<AppConfig>()("@dndevops/backend-co
 	effect: Effect.gen(function*() {
 	
 		const admins = (yield* Config.string("DNDEVOPS_ADMINS").pipe(Config.withDefault(""))).split(";");
+		const jwtSecret = yield* Config.redacted("DNDEVOPS_JWT_SECRET");
 
 		return Object.freeze({
-			admins: Object.freeze(admins)	
+			admins: Object.freeze(admins),
+			jwtSecret
 		})
 	})
 }){};
