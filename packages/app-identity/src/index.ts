@@ -72,6 +72,9 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 		if(Either.isLeft(result))
 			return yield* new UserNotFoundError;
 	}))
+	.handle("get-teams", ({ request }) => Effect.gen(function*() {
+		return [];
+	}))
 );
 
 const IsolatedApiLive = HttpApiBuilder.api(IsolatedApi).pipe(Layer.provide(identityGroupLive));

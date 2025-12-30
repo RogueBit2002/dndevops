@@ -11,7 +11,7 @@ import { } from "./identity";
 import { UnauthorizedError, UserNotFoundError } from "./errors";
 
 const DefaultAuthHeaderSchema = Schema.Struct({
-        Authorization: Schema.String.pipe(Schema.filter((s) => s.startsWith("Bearer ") && s.length > "Bearer ".length))
+        authorization: Schema.String.pipe(Schema.filter((s) => s.startsWith("Bearer ") && s.length > "Bearer ".length))
 });
 
 export const IdentityGroup = HttpApiGroup.make("Identity")
@@ -33,7 +33,11 @@ export const IdentityGroup = HttpApiGroup.make("Identity")
                         .addSuccess(Schema.Void)
                         .setPayload(Schema.Struct({ email: Schema.String }))
                         .addError(UserNotFoundError, { status: 404})
-                ).prefix("/identity");
+                )
+				.add(HttpApiEndpoint.get("get-teams")`/teams`
+					.addSuccess(Schema.Array(Schema.String))
+					.addError(UnauthorizedError, { status: 401 })
+					.setHeaders(DefaultAuthHeaderSchema)).prefix("/identity");
 
                 /*.add(HttpApiEndpoint.get("get-teams")`/teams`.addSuccess(Schema.Void)) // Assignment check
                 .add(HttpApiEndpoint.get("get-team")`/teams/:team`.addSuccess(Schema.Void)) // Assignment check

@@ -37,6 +37,8 @@ COPY --from=builder /workspace/packages/app-frontend/package.json packages/app-f
 
 COPY --from=builder /workspace/packages/app-identity/dist packages/app-identity/dist
 COPY --from=builder /workspace/packages/app-identity/package.json packages/app-identity/package.json
+COPY --from=builder /workspace/packages/app-identity/drizzle packages/app-identity/drizzle
+COPY --from=builder /workspace/packages/app-identity/drizzle.config.ts packages/app-identity/drizzle.config.ts
 
 COPY --from=builder /workspace/packages/app-game/dist packages/app-game/dist
 COPY --from=builder /workspace/packages/app-game/package.json packages/app-game/package.json

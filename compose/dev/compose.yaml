@@ -1,0 +1,64 @@
+services:
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+  rabbitmq:
+    image: rabbitmq:4.2.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    #ports:
+      #- "5672:5672"
+      #- "5671:5671"
+      #- "15672:15672"
+      #- "15671:15671"
+  mailpit:
+    image: axllent/mailpit:latest
+    #ports:
+      #- "8025:8025"
+      #- "1025:1025"
+
+  db:
+    image: postgres:18.1
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    #ports:
+      #- "5432:5432"
+    volumes:
+      - ./init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql
+      - ./persist/postgresql:/var/lib/postgresql
+  
+  dbman:
+    image: dpage/pgadmin4:9.8
+    #ports:
+      #- 5050:80
+    environment:
+      # Required by pgAdmin
+      PGADMIN_DEFAULT_EMAIL: demo@example.com
+      PGADMIN_DEFAULT_PASSWORD: secret
+
+      # Don't require the user to login
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+
+      # Don't require a "master" password after logging in
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+  
+  app:
+    image: dndevops:latest-dev
+    environment:
+      DNDEVOPS_DEPLOYMENT: all
+      DNDEVOPS_ADMINS: admin@dndevops.dev
+      DNDEVOPS_JWT_SECRET: 1234hvp
+      DNDEVOPS_SMTP_URI: smtp://user:password@mailpit:1025
+      DNDEVOPS_SMTP_SENDER: dndevops@company.com
+      DNDEVOPS_AMQP_URI: amqp://user:password@rabbitmq:5671
+      DNDEVOPS_IDENTITY_POSTGRES_URI: postgres://user:password@db/identity
+      DNDEVOPS_GAME_POSTGRES_URI: postgres://user:password@db/game
+      DNDEVOPS_EVENTS_POSTGRES_URI: postgres://user:password@db/events

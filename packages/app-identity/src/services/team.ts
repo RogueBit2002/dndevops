@@ -1,5 +1,5 @@
 import { DrizzleService } from "@dndevops/backend-core/database";
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import { TeamID, Principal, TeamData } from "@dndevops/domain/identity";
 import { InvalidPermissionsError, TeamNotFoundError } from "@dndevops/domain/errors";
 
