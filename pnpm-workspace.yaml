@@ -3,9 +3,12 @@ packages:
 
 catalog:
   '@effect/platform': 0.93.8
+  '@effect/platform-node': ^0.104.0
+  '@types/amqplib': 0.10.8
   '@types/jsonwebtoken': 9.0.10
   '@types/node': ^24.9.2
   '@types/pg': 8.16.0
+  amqplib: 0.10.9
   drizzle-kit: 0.31.8
   drizzle-orm: 0.45.1
   effect: 3.19.12

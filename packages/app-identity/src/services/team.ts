@@ -1,23 +1,30 @@
 import { DrizzleService } from "@dndevops/backend-core/database";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { TeamID, Principal, TeamData } from "@dndevops/domain/identity";
 import { InvalidPermissionsError, TeamNotFoundError } from "@dndevops/domain/errors";
 
 import { teamMemberTable, teamTable } from "../db/schema";
 import { and, eq } from "drizzle-orm/pg-core/expressions";
 import * as uuid from "uuid";
+import { AMQPService } from "@dndevops/backend-core";
+import { Exchanges, TeamCreatedEvent, TeamDeletedEvent } from "@dndevops/backend-core/messaging";
 
-export class TeamService extends Effect.Service<TeamService>()('Aaa', {
+export class TeamService extends Effect.Service<TeamService>()('@dndevops/app-identity/TeamService', {
 	effect: Effect.gen(function*() {
 		const drizzle = yield* DrizzleService;
-		
+		const amqp = yield* AMQPService;
+
+
+		const channel = yield* amqp.use(async conn => conn.createChannel());
+		const exchange = yield* amqp.use(async conn => channel.assertExchange(Exchanges.EVENTS.name, Exchanges.EVENTS.type, { durable: Exchanges.EVENTS.durable }));
+
 		return {
-			getTeams: Effect.fn(function*() {
+			getTeams: Effect.fn(function*(principal: Principal) {
 				const teams = yield* drizzle.use(async db => db.select().from(teamTable))
 				return teams.map(t => t.id);
 			}),
 
-			getTeam: Effect.fn(function*(id: TeamID) {
+			getTeam: Effect.fn(function*(principal: Principal, id: TeamID) {
 				const [teamData] = yield* drizzle.use(async db => db.select().from(teamTable).where(eq(teamTable.id, id)));
 
 				if(!teamData)
@@ -40,7 +47,11 @@ export class TeamService extends Effect.Service<TeamService>()('Aaa', {
 				
 				yield* drizzle.use(async db => db.insert(teamTable).values({ id, name: displayName }));
 
-				return id;
+				const event = new TeamCreatedEvent({ id });
+
+				yield* amqp.use(async conn => channel.publish(exchange.exchange, event.routingKey, Buffer.from(JSON.stringify(Schema.encodeSync(TeamCreatedEvent)(event)))));
+
+				return id as TeamID;
 			}),
 
 			deleteTeam: Effect.fn(function*(principal: Principal, id: TeamID) {
@@ -51,6 +62,11 @@ export class TeamService extends Effect.Service<TeamService>()('Aaa', {
 
 				if(rows.length == 0)
 					return yield* new TeamNotFoundError;
+
+				const event = new TeamDeletedEvent({ id });
+				
+				yield* amqp.use(async conn => channel.publish(exchange.exchange, event.routingKey, Buffer.from(JSON.stringify(Schema.encodeSync(TeamDeletedEvent)(event)))));
+
 			}),
 
 			updateTeam: Effect.fn(function*(principal: Principal, id: TeamID, displayName: string) {

@@ -9,6 +9,8 @@
 		"check": "eslint src --config ../../eslint.config.mjs"
 	},
 	"dependencies": {
-		"@dndevops/domain": "workspace:"
+		"@dndevops/domain": "workspace:",
+		"@effect/platform": "catalog:",
+		"effect": "catalog:"
 	}
 }

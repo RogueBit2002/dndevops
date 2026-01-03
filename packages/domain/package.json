@@ -16,6 +16,9 @@
 		},
 		"./identity": {
 			"import": "./dist/identity.js"
+		},
+		"./types": {
+			"import": "./dist/types.js"
 		}
 	},
 	"scripts": {

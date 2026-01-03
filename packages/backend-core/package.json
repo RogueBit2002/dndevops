@@ -10,6 +10,9 @@
 		},
 		"./database": {
 			"import": "./dist/database/index.js"
+		},
+		"./messaging": {
+			"import": "./dist/messaging.js"
 		}
 	},
 	"scripts": {
@@ -18,13 +21,18 @@
 		"check": "eslint src --config ../../eslint.config.mjs"
 	},
 	"dependencies": {
+		"@dndevops/domain": "workspace:",
 		"@types/nodemailer": "^7.0.4",
+		"amqplib": "catalog:",
 		"drizzle-orm": "catalog:",
 		"effect": "catalog:",
+		"jsonwebtoken": "catalog:",
 		"nodemailer": "^7.0.11",
 		"pg": "catalog:"
 	},
 	"devDependencies": {
+		"@types/amqplib": "catalog:",
+		"@types/jsonwebtoken": "catalog:",
 		"@types/pg": "catalog:"
 	}
 }

@@ -11,8 +11,10 @@ export const TeamDataSchema = Schema.Struct({
 
 export type TeamData = typeof TeamDataSchema.Type;
 
-export interface Principal {
-        email: string
-        teams: TeamID[];
-        admin: boolean;
-}
+export const PrincipalSchema = Schema.Struct({
+	email: Schema.String,
+	teams: Schema.Array(TeamIDSchema),
+	admin: Schema.Boolean
+});
+
+export type Principal = typeof PrincipalSchema.Type;

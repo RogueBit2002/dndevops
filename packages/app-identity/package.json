@@ -12,7 +12,7 @@
 	"dependencies": {
 		"@dndevops/backend-core": "workspace:",
 		"@dndevops/domain": "workspace:",
-		"@effect/platform-node": "^0.104.0",
+		"@effect/platform-node": "catalog:",
 		"drizzle-kit": "catalog:",
 		"drizzle-orm": "catalog:",
 		"effect": "catalog:",
