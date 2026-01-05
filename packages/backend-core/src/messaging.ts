@@ -25,3 +25,8 @@ export const Exchanges = {
 		durable: true
 	}
 } as const;
+
+const x : TeamCreatedEvent = {} as unknown as TeamCreatedEvent;
+
+x.routingKey;
+

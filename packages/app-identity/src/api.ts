@@ -2,12 +2,7 @@
 import { Console, Effect, Either, Layer, Schema, flow, Config } from "effect";
 import {
 	HttpApi,
-	HttpApiBuilder,
-	HttpApiEndpoint,
-	HttpApiError,
-	HttpApiGroup,
-	HttpMiddleware,
-	HttpServer
+	HttpApiBuilder
 } from "@effect/platform";
 
 
@@ -21,7 +16,7 @@ const IsolatedApi = HttpApi.make("DnDevOps-Identity").add(IdentityGroup);
 
 
 const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handlers) => handlers
-	.handle("get-access-token", ({ request, headers }) => Effect.gen(function*() {
+	.handle("getAccessToken", ({ request, headers }) => Effect.gen(function*() {
 		const authService = yield* AuthenticationService;
 
 		const refreshToken = headers.authorization.substring("Bearer ".length);
@@ -33,7 +28,7 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 
 		return yield* new UnauthorizedError;
 	}))
-	.handle("get-refresh-token", ({ request, headers }) => Effect.gen(function*() {
+	.handle("getRefreshToken", ({ request, headers }) => Effect.gen(function*() {
 
 		const authService = yield* AuthenticationService;
 
@@ -61,7 +56,7 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 
 		return yield* new UnauthorizedError;
 	}))
-	.handle("send-refresh-request", ({ request, payload }) => Effect.gen(function*() {
+	.handle("sendRefreshRequest", ({ request, payload }) => Effect.gen(function*() {
 		const authService = yield* AuthenticationService;
 
 		const result = yield* Effect.either(authService.requestRefreshToken(payload.email));
@@ -69,24 +64,21 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 		if(Either.isLeft(result))
 			return yield* new UserNotFoundError;
 	}))
-	.handle("get-teams", ({ request,  }) => Effect.gen(function*() {
+	.handle("getTeams", ({ request,  }) => Effect.gen(function*() {
 		const info = yield* AuthenticationInfo;
 
 		const teamService = yield* TeamService;
 
 		return yield* teamService.getTeams(info.principal);
 	}))
-	.handle("get-team", ({ request, urlParams }) => Effect.gen(function*() {
-
-		console.log(urlParams.team);
-
+	.handle("getTeam", ({ request, path }) => Effect.gen(function*() {
 		const info = yield* AuthenticationInfo;
 
 		const teamService = yield* TeamService;
 
-		return yield* teamService.getTeam(info.principal, urlParams.team);
+		return yield* teamService.getTeam(info.principal, path.team);
 	}))
-	.handle("create-team", ({ request, payload}) => Effect.gen(function*() {
+	.handle("createTeam", ({ request, payload}) => Effect.gen(function*() {
 
 		const authInfo = yield* AuthenticationInfo;
 
@@ -95,35 +87,34 @@ const identityGroupLive = HttpApiBuilder.group(IsolatedApi, "Identity", (handler
 		const id = yield* teamService.createTeam(authInfo.principal, payload.displayName);
 		return id;
 	}))
-	.handle("delete-team", ({ request, urlParams}) => Effect.gen(function*() {
+	.handle("deleteTeam", ({ request, path }) => Effect.gen(function*() {
 		const authInfo = yield* AuthenticationInfo;
 
 		const teamService = yield* TeamService;
 
-		yield* teamService.deleteTeam(authInfo.principal, urlParams.team);
+		yield* teamService.deleteTeam(authInfo.principal, path.team);
 	}))
-	.handle("update-team", ({ request, urlParams, payload}) => Effect.gen(function*() {
+	.handle("updateTeam", ({ request, path, payload}) => Effect.gen(function*() {
 		const authInfo = yield* AuthenticationInfo;
 
 		const teamService = yield* TeamService;
 
-		yield* teamService.updateTeam(authInfo.principal, urlParams.team, payload.displayName);
+		yield* teamService.updateTeam(authInfo.principal, path.team, payload.displayName);
 	}))
-	.handle("assign-to-team", ({ request, urlParams, payload}) => Effect.gen(function*() {
+	.handle("assignUserToTeam", ({ request, path, payload}) => Effect.gen(function*() {
 		const authInfo = yield* AuthenticationInfo;
 
 		const teamService = yield* TeamService;
 
-		yield* teamService.assignUserToTeam(authInfo.principal, urlParams.team, payload.email);
+		yield* teamService.assignUserToTeam(authInfo.principal, path.team, payload.email);
 	}))
-	.handle("remove-from-team", ({ request, urlParams }) => Effect.gen(function*() {
+	.handle("removeUserFromTeam", ({ request, path }) => Effect.gen(function*() {
 		const authInfo = yield* AuthenticationInfo;
 
 		const teamService = yield* TeamService;
 
-		yield* teamService.removeUserFromTeam(authInfo.principal, urlParams.team, urlParams.user);
+		yield* teamService.removeUserFromTeam(authInfo.principal, path.team, path.user);
 	}))
-
 );
 
 export default HttpApiBuilder.api(IsolatedApi).pipe(Layer.provide(identityGroupLive));

@@ -60,6 +60,13 @@ const coreLayer = Layer.mergeAll(mailLayer, drizzleLayer, amqpLayer);
 const appLayer = Layer.mergeAll(AuthenticationService.Default, TeamService.Default).pipe(Layer.provide(coreLayer));
 
 // Configure and serve the API
+
+const { port, host } = Effect.runSync(Effect.gen(function*() { 
+	return { 
+		port: yield* Config.number("DNDEVOPS_HTTP_PORT").pipe(Config.withDefault(3000)),
+		host: yield* Config.string("DNDEVOPS_HTTP_HOST").pipe(Config.withDefault("0.0.0.0"))
+	}
+}));
 const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
 	// Add CORS middleware to handle cross-origin requests
 	Layer.provide(HttpApiBuilder.middlewareCors()),
@@ -68,7 +75,7 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
 	// Log the server's listening address
 	HttpServer.withLogAddress,
 	// Set up the Node.js HTTP server
-	Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+	Layer.provide(NodeHttpServer.layer(createServer, { port, host })),
 	
 	Layer.provide(appLayer),
 	Layer.provide(LiveAuthGatekeeper)

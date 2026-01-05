@@ -6,8 +6,8 @@
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
 		"build": "tsc --build && node ../../scripts/bundle-backend.mjs",
-		"check": "eslint src --config ../../eslint.config.mjs",
-		"start": "node --env-file=.env ."
+		"check": "eslint src --config eslint.config.mjs",
+		"start": "node ."
 	},
 	"dependencies": {
 		"@dndevops/backend-core": "workspace:",

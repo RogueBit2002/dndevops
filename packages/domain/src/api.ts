@@ -4,6 +4,7 @@ import {
   HttpApiError,
   HttpApiGroup,
   HttpApiMiddleware,
+  HttpApiSchema,
   HttpApiSecurity,
   OpenApi
 } from "@effect/platform";
@@ -11,7 +12,7 @@ import { Context, Schema } from "effect";
 
 import { Principal, TeamDataSchema, TeamIDSchema } from "./identity";
 import { BoardNotFoundError, InvalidPermissionsError, InventoryNotFoundError, TeamNotFoundError, UnauthorizedError, UserNotFoundError } from "./errors";
-import { BoardIDSchema, BoardSchema, InventorySchema } from "./types";
+import { BoardSchema, InventorySchema } from "./types";
 
 const TokenHeaderSchema = Schema.Struct({
         authorization: Schema.String.pipe(Schema.filter((s) => s.startsWith("Bearer ") && s.length > "Bearer ".length))
@@ -31,97 +32,94 @@ export class AuthGatekeeper extends HttpApiMiddleware.Tag<AuthGatekeeper>()("@dn
 
 
 export const IdentityGroup = HttpApiGroup.make("Identity")
-                .add(HttpApiEndpoint.get("get-access-token")`/access`
-                        .addSuccess(Schema.String)
-                        .addError(UnauthorizedError, { status: 401})
-                        .setHeaders(Schema.Struct({
-                                authorization: Schema.String.pipe(Schema.filter(s => s.startsWith("Bearer ")))
-                        }))
-                )
-                .add(HttpApiEndpoint.get("get-refresh-token")`/refresh`
-                        .addSuccess(Schema.String)
-                        .addError(UnauthorizedError, { status: 401})
-                        .setHeaders(Schema.Struct({
-                                authorization: Schema.String.pipe(Schema.filter((s) => s.startsWith("Basic ")))
-                        }))
-                )
-                .add(HttpApiEndpoint.post("send-refresh-request")`/refresh`
-                        .addSuccess(Schema.Void)
-                        .setPayload(Schema.Struct({ email: Schema.String }))
-                        .addError(UserNotFoundError, { status: 404})
-                )
-                .add(HttpApiEndpoint.get("get-teams")`/teams`
-					.addSuccess(Schema.Array(TeamIDSchema))
-					.addError(UnauthorizedError, { status: 401 })
-					.addError(InvalidPermissionsError, { status: 403 })
-					.setHeaders(TokenHeaderSchema)
-					.middleware(AuthGatekeeper))
-				.add(HttpApiEndpoint.get("get-team")`/team/:team`
-					.addSuccess(Schema.extend(TeamDataSchema, Schema.Struct({ id: TeamIDSchema })))
-					.addError(UnauthorizedError, { status: 401})
-					.addError(InvalidPermissionsError, { status: 403 })
-					.addError(TeamNotFoundError, { status: 404})
-					.setHeaders(TokenHeaderSchema)
-					.middleware(AuthGatekeeper)
-					.setUrlParams(Schema.Struct({ team: TeamIDSchema })))
-				.add(HttpApiEndpoint.post("create-team")`/teams`
-					.addSuccess(TeamIDSchema)
-					.addError(UnauthorizedError, { status: 401})
-					.addError(InvalidPermissionsError, { status: 403 })
-					.setHeaders(TokenHeaderSchema)
-					.setPayload(TeamDataSchema.pipe(Schema.pick("displayName")))
-					.middleware(AuthGatekeeper))
-				.add(HttpApiEndpoint.del("delete-team")`/teams/:team`
-					.addSuccess(Schema.Void)
-					.addError(UnauthorizedError, { status: 401})
-					.addError(InvalidPermissionsError, { status: 403 })
-					.addError(TeamNotFoundError, { status: 404 })
-					.setUrlParams(Schema.Struct({ team: TeamIDSchema }))
-					.setHeaders(TokenHeaderSchema)
-					.middleware(AuthGatekeeper)).prefix("/identity")
-				.add(HttpApiEndpoint.post("update-team")`/teams/:team`
-					.addSuccess(Schema.Void)
-					.addError(UnauthorizedError, { status: 401})
-					.addError(InvalidPermissionsError, { status: 403 })
-					.addError(TeamNotFoundError, { status: 404 })
-					.setHeaders(TokenHeaderSchema)
-					.setUrlParams(Schema.Struct({ team: TeamIDSchema }))
-					.setPayload(TeamDataSchema.pipe(Schema.pick("displayName")))
-					.middleware(AuthGatekeeper))
-				.add(HttpApiEndpoint.post("assign-to-team")`/teams/:team/users`
-					.addSuccess(Schema.Void)
-					.addError(UnauthorizedError, { status: 401})
-					.addError(InvalidPermissionsError, { status: 403 })
-					.addError(TeamNotFoundError, { status: 404 })
-					.setHeaders(TokenHeaderSchema)
-					.setUrlParams(Schema.Struct({ team: TeamIDSchema }))
-					.setPayload(Schema.Struct({ email: Schema.String }))
-					.middleware(AuthGatekeeper))
-				.add(HttpApiEndpoint.post("remove-from-team")`/teams/:team/users/:user`
-					.addSuccess(Schema.Void)
-					.addError(UnauthorizedError, { status: 401})
-					.addError(InvalidPermissionsError, { status: 403 })
-					.addError(TeamNotFoundError, { status: 404 })
-					.setHeaders(TokenHeaderSchema)
-					.setUrlParams(Schema.Struct({ team: TeamIDSchema, user: Schema.String }))
-					.middleware(AuthGatekeeper)).prefix("/identity")
+	.add(HttpApiEndpoint.get("getAccessToken")`/access`
+		.addSuccess(Schema.Struct({
+			refreshToken: Schema.String,
+			accessToken: Schema.String
+		}))
+		.addError(UnauthorizedError, { status: 401})
+		.setHeaders(Schema.Struct({authorization: Schema.String.pipe(Schema.filter(s => s.startsWith("Bearer ")))})))
+	.add(HttpApiEndpoint.get("getRefreshToken")`/refresh`
+		.addSuccess(Schema.String)
+		.addError(UnauthorizedError, { status: 401})
+		.setHeaders(Schema.Struct({authorization: Schema.String.pipe(Schema.filter((s) => s.startsWith("Basic ")))})))
+	.add(HttpApiEndpoint.post("sendRefreshRequest")`/refresh`
+		.addSuccess(Schema.Void)
+		.addError(UserNotFoundError, { status: 404})
+		.setPayload(Schema.Struct({ email: Schema.String })))
+	.add(HttpApiEndpoint.get("getTeams")`/teams`
+		.addSuccess(Schema.Array(TeamIDSchema))
+		.addError(UnauthorizedError, { status: 401 })
+		.addError(InvalidPermissionsError, { status: 403 })
+		.setHeaders(TokenHeaderSchema)
+		.middleware(AuthGatekeeper))
+	.add(HttpApiEndpoint.get("getTeam")`/teams/${HttpApiSchema.param("team", Schema.String)}`
+		.addSuccess(Schema.extend(TeamDataSchema, Schema.Struct({ id: TeamIDSchema })))
+		.addError(UnauthorizedError, { status: 401})
+		.addError(InvalidPermissionsError, { status: 403 })
+		.addError(TeamNotFoundError, { status: 404})
+		.setHeaders(TokenHeaderSchema)
+		.middleware(AuthGatekeeper))
+	.add(HttpApiEndpoint.post("createTeam")`/teams`
+		.addSuccess(TeamIDSchema)
+		.addError(UnauthorizedError, { status: 401})
+		.addError(InvalidPermissionsError, { status: 403 })
+		.setHeaders(TokenHeaderSchema)
+		.setPayload(TeamDataSchema.pipe(Schema.pick("displayName")))
+		.middleware(AuthGatekeeper))
+	.add(HttpApiEndpoint.del("deleteTeam")`/teams/${HttpApiSchema.param("team", Schema.String)}`
+		.addSuccess(Schema.Void)
+		.addError(UnauthorizedError, { status: 401})
+		.addError(InvalidPermissionsError, { status: 403 })
+		.addError(TeamNotFoundError, { status: 404 })
+		.setHeaders(TokenHeaderSchema)
+		.middleware(AuthGatekeeper))
+	.add(HttpApiEndpoint.post("updateTeam")`/teams/${HttpApiSchema.param("team", Schema.String)}`
+		.addSuccess(Schema.Void)
+		.addError(UnauthorizedError, { status: 401})
+		.addError(InvalidPermissionsError, { status: 403 })
+		.addError(TeamNotFoundError, { status: 404 })
+		.setHeaders(TokenHeaderSchema)
+		.setPayload(TeamDataSchema.pipe(Schema.pick("displayName")))
+		.middleware(AuthGatekeeper))
+	.add(HttpApiEndpoint.post("assignUserToTeam")`/teams/${HttpApiSchema.param("team", Schema.String)}/users`
+		.addSuccess(Schema.Void)
+		.addError(UnauthorizedError, { status: 401})
+		.addError(InvalidPermissionsError, { status: 403 })
+		.addError(TeamNotFoundError, { status: 404 })
+		.setHeaders(TokenHeaderSchema)
+		.setPayload(Schema.Struct({ email: Schema.String }))
+		.middleware(AuthGatekeeper))
+	.add(HttpApiEndpoint.post("removeUserFromTeam")`/teams/${HttpApiSchema.param("team", Schema.String)}/users/${HttpApiSchema.param("user", Schema.String)}`
+		.addSuccess(Schema.Void)
+		.addError(UnauthorizedError, { status: 401})
+		.addError(InvalidPermissionsError, { status: 403 })
+		.addError(TeamNotFoundError, { status: 404 })
+		.setHeaders(TokenHeaderSchema)
+		.middleware(AuthGatekeeper))
+	.prefix("/identity")
+
+
 export const GameGroup = HttpApiGroup.make("Game")
-                .add(HttpApiEndpoint.get("get-board")`/boards/:board`
-					.addSuccess(BoardSchema)
-					.addError(InvalidPermissionsError, {status: 403})
-					.addError(BoardNotFoundError, { status: 404 })
-					.setUrlParams(Schema.Struct({ board: BoardIDSchema }))
-					.setHeaders(TokenHeaderSchema)
-					.middleware(AuthGatekeeper))
-                //.add(HttpApiEndpoint.post("manipulate-board")`/:team/board`.addSuccess(Schema.Void).setHeaders(DefaultAuthHeaderSchema))
-                .add(HttpApiEndpoint.get("get-inventory")`/teams/:team/inventories`
-					.addSuccess(InventorySchema)
-					.addError(InvalidPermissionsError, { status: 403 })
-					.addError(InventoryNotFoundError, { status: 404 })
-					.setUrlParams(Schema.Struct({ team: TeamIDSchema }))
-					.setHeaders(TokenHeaderSchema)
-					.middleware(AuthGatekeeper))
-				.prefix("/game");
+	.add(HttpApiEndpoint.get("getBoard")`/teams/${HttpApiSchema.param("team", Schema.String)}/board`
+		.addSuccess(BoardSchema)
+		.addError(InvalidPermissionsError, {status: 403})
+		.addError(BoardNotFoundError, { status: 404 })
+		.setHeaders(TokenHeaderSchema)
+		.middleware(AuthGatekeeper))
+	/*.add(HttpApiEndpoint.get("getBoardsByTeam")`/teams/${HttpApiSchema.param("team", Schema.String)}/boards`
+		.addSuccess(Schema.Array(BoardIDSchema))
+		.addError(InvalidPermissionsError, { status: 403 })
+		.addError(TeamNotFoundError, { status: 404 })
+		.setHeaders(TokenHeaderSchema)
+		.middleware(AuthGatekeeper))*/
+	.add(HttpApiEndpoint.get("getInventory")`/teams/${HttpApiSchema.param("team", Schema.String)}/inventory`
+		.addSuccess(InventorySchema)
+		.addError(InvalidPermissionsError, { status: 403 })
+		.addError(InventoryNotFoundError, { status: 404 })
+		.setHeaders(TokenHeaderSchema)
+		.middleware(AuthGatekeeper))
+	.prefix("/game");
 
 export const EventGroup = HttpApiGroup.make("Events")
                 .add(HttpApiEndpoint.post("publish-event")`/publish/:application`.addSuccess(Schema.Void).setHeaders(TokenHeaderSchema))

@@ -21,24 +21,31 @@ const IsolatedApi = HttpApi.make("DnDevOps-Game").add(GameGroup);
 
 
 const gameGroupLive = HttpApiBuilder.group(IsolatedApi, "Game", (handlers) => handlers
-	.handle("get-board", ({ request, urlParams }) => Effect.gen(function*() {
+	.handle("getBoard", ({ request, path }) => Effect.gen(function*() {
 		
 		const authInfo = yield* AuthenticationInfo;
 
 		const boardStorage = yield* BoardStorageService;
 
 		// All errors thrown are known by the API
-		const board = yield* boardStorage.getBoard(authInfo.principal, urlParams.board);
+		const board = yield* boardStorage.getBoard(authInfo.principal, path.team);
 		
 		return board;
 	}))
-	.handle("get-inventory", ({ request, urlParams }) => Effect.gen(function*() {
+	/*.handle("getBoardsByTeam", ({ request, path }) => Effect.gen(function*() {
+		const authInfo = yield* AuthenticationInfo;
+
+		const boardStorageService = yield* BoardStorageService;
+
+		return yield* boardStorageService.getBoardsByTeam(authInfo.principal, path.team);
+	}))*/
+	.handle("getInventory", ({ request, path }) => Effect.gen(function*() {
 		
 		const authInfo = yield* AuthenticationInfo;
 
 		const inventoryService = yield* InventoryService;
 
-		const inventory = yield* inventoryService.getInventory(authInfo.principal, urlParams.team);
+		const inventory = yield* inventoryService.getInventory(authInfo.principal, path.team);
 
 		return inventory;
 	}))

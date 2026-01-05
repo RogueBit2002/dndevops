@@ -1,5 +1,5 @@
 {
-  "id": "8301e654-d5ae-4aea-990b-2424d4647756",
+  "id": "e74d3112-3465-4012-96a2-3b066a384e64",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -8,16 +8,10 @@
       "name": "boards",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
         "team": {
           "name": "team",
           "type": "uuid",
-          "primaryKey": false,
+          "primaryKey": true,
           "notNull": true
         },
         "data": {

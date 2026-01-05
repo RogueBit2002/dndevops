@@ -6,7 +6,6 @@ import { Exchanges, Event, TeamCreatedEvent, TeamDeletedEvent } from "@dndevops/
 import { BoardStorageService } from "./services/board-storage";
 import { InventoryService } from "./services/inventory";
 
-
 import {
 	HttpApiBuilder,
 	HttpMiddleware,
@@ -25,7 +24,7 @@ import { Principal, TeamID } from '@dndevops/domain/identity';
 const drizzleLayer = Layer.scoped(
 	DrizzleService,
 	Effect.gen(function*() {
-		const uri = yield* Config.string("DNDEVOPS_IDENTITY_POSTGRES_URI");
+		const uri = yield* Config.string("DNDEVOPS_GAME_POSTGRES_URI");
 
 		const service = yield* DrizzleService.make(uri);
 
@@ -78,6 +77,7 @@ const eventListenerProgram = Effect.gen(function*() {
 
 		const content = msg.content.toString();
 		let decoded;
+		
 		try {
 			const encoded = JSON.parse(msg.content.toString());
 			decoded = Schema.decodeUnknownSync(Event)(encoded);
@@ -91,33 +91,36 @@ const eventListenerProgram = Effect.gen(function*() {
 		const action = pipe(
 			Match.value(decoded),
 			Match.tag(TeamCreatedEvent._tag, Effect.fn(function*(event: TeamCreatedEvent) {
-				yield* inventoryService.createInventory(servicePrincipal, event.id);
-				yield* boardStorageService.createBoard(servicePrincipal, event.id);
+				yield* inventoryService.ensureInventory(servicePrincipal, event.id);
+
+				yield* boardStorageService.ensureBoard(servicePrincipal, event.id);
 			})),
 			Match.tag(TeamDeletedEvent._tag, Effect.fn(function*(event: TeamDeletedEvent) {
 				yield* inventoryService.deleteInventory(servicePrincipal, event.id as TeamID);
 
-				const boards = yield* boardStorageService.getBoardsByTeam(servicePrincipal, event.id as TeamID);
-
-				for(const id of boards)
-					yield* boardStorageService.deleteBoard(servicePrincipal, id);
-			
+				yield* boardStorageService.deleteBoard(servicePrincipal, event.id as TeamID);
 			})),
 			Match.orElse(() => undefined)
 		);
 
 
-		if(!action)
-			return;
-
-		await Effect.runPromise(action).catch(e => console.error(e)).then(() => channel.ack(msg))
+		if(action)
+			await Effect.runPromise(action).catch(e => console.error(e));
+		
+		channel.ack(msg);
 	}));
 
 	yield* Effect.never;
 }).pipe(Effect.provide(appLayer));
 
 
-// Configure and serve the API
+const { port, host } = Effect.runSync(Effect.gen(function*() { 
+	return { 
+		port: yield* Config.number("DNDEVOPS_HTTP_PORT").pipe(Config.withDefault(3000)),
+		host: yield* Config.string("DNDEVOPS_HTTP_HOST").pipe(Config.withDefault("0.0.0.0"))
+	}
+}));
+
 const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
 	// Add CORS middleware to handle cross-origin requests
 	Layer.provide(HttpApiBuilder.middlewareCors()),
@@ -126,7 +129,7 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
 	// Log the server's listening address
 	HttpServer.withLogAddress,
 	// Set up the Node.js HTTP server
-	Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+	Layer.provide(NodeHttpServer.layer(createServer, { port, host })),
 	
 	Layer.provide(appLayer),
 	Layer.provide(LiveAuthGatekeeper)
@@ -134,5 +137,6 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
 
 // Launch the server
 Layer.launch(HttpLive).pipe(NodeRuntime.runMain);
+
 
 Effect.runFork(eventListenerProgram);

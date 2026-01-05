@@ -1,5 +1,5 @@
 {
-  "id": "066ed476-76d4-463e-aa35-a94fc619418f",
+  "id": "cef984c4-8f80-4e2b-bd30-36a493aad31e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -14,9 +14,15 @@
           "primaryKey": false,
           "notNull": true
         },
-        "code": {
-          "name": "code",
-          "type": "varchar(6)",
+        "hashed_code": {
+          "name": "hashed_code",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "salt": {
+          "name": "salt",
+          "type": "char(32)",
           "primaryKey": false,
           "notNull": true
         },
@@ -29,15 +35,7 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "refresh_codes_email_code_pk": {
-          "name": "refresh_codes_email_code_pk",
-          "columns": [
-            "email",
-            "code"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -47,10 +45,22 @@
       "name": "refresh_token",
       "schema": "",
       "columns": {
-        "token": {
-          "name": "token",
-          "type": "text",
+        "id": {
+          "name": "id",
+          "type": "uuid",
           "primaryKey": true,
+          "notNull": true
+        },
+        "hashed_token": {
+          "name": "hashed_token",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "salt": {
+          "name": "salt",
+          "type": "char(32)",
+          "primaryKey": false,
           "notNull": true
         },
         "email": {
@@ -125,7 +135,7 @@
         },
         "name": {
           "name": "name",
-          "type": "varchar(24)",
+          "type": "varchar(48)",
           "primaryKey": false,
           "notNull": true
         }

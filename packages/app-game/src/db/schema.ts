@@ -6,7 +6,6 @@ export const inventoryTable = pgTable("inventories", {
 });
 
 export const boardTable = pgTable("boards", {
-	id: uuid().notNull().primaryKey(),
-	team: uuid().notNull(),
+	team: uuid().notNull().primaryKey(),
 	data: jsonb().notNull()
 });

@@ -1,11 +1,9 @@
 FROM alpine:3.23.0 AS base
 
-RUN apk update && apk add nodejs
+RUN apk update && apk add nodejs pnpm
 
 
 FROM base AS builder
-
-RUN apk add pnpm
 
 WORKDIR /workspace
 
@@ -31,6 +29,9 @@ COPY --chmod=0755 images/packed/launcher.sh .
 COPY images/packed/supervisord.conf .
 COPY images/packed/Caddyfile .
 
+# COPY --from=builder /workspace/pnpm-workspace.yaml .
+# COPY --from=builder /workspace/pnpm-lock.yaml .
+# COPY --from=builder /workspace/package.json .
 
 COPY --from=builder /workspace/packages/app-frontend/dist packages/app-frontend/dist
 COPY --from=builder /workspace/packages/app-frontend/package.json packages/app-frontend/package.json
@@ -42,9 +43,12 @@ COPY --from=builder /workspace/packages/app-identity/drizzle.config.ts packages/
 
 COPY --from=builder /workspace/packages/app-game/dist packages/app-game/dist
 COPY --from=builder /workspace/packages/app-game/package.json packages/app-game/package.json
+COPY --from=builder /workspace/packages/app-game/drizzle packages/app-game/drizzle
+COPY --from=builder /workspace/packages/app-game/drizzle.config.ts packages/app-game/drizzle.config.ts
 
 COPY --from=builder /workspace/packages/app-events/dist packages/app-events/dist
 COPY --from=builder /workspace/packages/app-events/package.json packages/app-events/package.json
+COPY --from=builder /workspace/packages/app-events/drizzle packages/app-events/drizzle
+COPY --from=builder /workspace/packages/app-events/drizzle.config.ts packages/app-events/drizzle.config.ts
 
-# CMD ["/usr/bin/supervisord", "--configuration=/app/supervisord.conf"]
 CMD [ "/app/launcher.sh" ]

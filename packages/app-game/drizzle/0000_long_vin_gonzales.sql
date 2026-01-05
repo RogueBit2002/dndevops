@@ -1,6 +1,5 @@
 CREATE TABLE "boards" (
-	"id" uuid PRIMARY KEY NOT NULL,
-	"team" uuid NOT NULL,
+	"team" uuid PRIMARY KEY NOT NULL,
 	"data" jsonb NOT NULL
 );
 --> statement-breakpoint

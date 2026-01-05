@@ -1,5 +1,5 @@
 http://localhost:8000 {
-    reverse_proxy dndevops:8000
+    reverse_proxy app:8000
 }
 
 http://mailpit.localhost:8000 {
@@ -8,4 +8,8 @@ http://mailpit.localhost:8000 {
 
 http://rabbitmq.localhost:8000 {
         reverse_proxy rabbitmq:15672
+}
+
+http://dbman.localhost:8000 {
+	reverse_proxy dbman:80
 }

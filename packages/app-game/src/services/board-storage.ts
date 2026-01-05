@@ -1,8 +1,11 @@
 import { DrizzleService } from "@dndevops/backend-core/database";
-import { BoardNotFoundError } from "@dndevops/domain/errors";
+import { BoardNotFoundError, InvalidPermissionsError } from "@dndevops/domain/errors";
 import { Principal, TeamID } from "@dndevops/domain/identity";
 import { Effect } from "effect";
-import { Board } from "@dndevops/domain/types";
+import { Board, BoardData } from "@dndevops/domain/types";
+import { boardTable } from "../db/schema";
+import { and, eq } from "drizzle-orm/pg-core/expressions";
+import * as uuid from "uuid";
 
 export class BoardStorageService extends Effect.Service<BoardStorageService>()('@dndevops/app-game/BoardStorageService', {
 	dependencies: [ ],
@@ -11,26 +14,44 @@ export class BoardStorageService extends Effect.Service<BoardStorageService>()('
 		const drizzle = yield* DrizzleService;
 
 		return {
-			boardExists: Effect.fn(function*(principal: Principal, id: string) {
-				return false;
+			boardExists: Effect.fn(function*(principal: Principal, team: TeamID) {
+				const rows = yield* drizzle.use(async db => db.select().from(boardTable).where(eq(boardTable.team, team)));
+				return rows.length > 0;
 			}),
-			createBoard: Effect.fn(function*(principal: Principal, team: TeamID) {
+			ensureBoard: Effect.fn(function*(principal: Principal, team: TeamID) {
+				if(!principal.admin)
+					return yield* new InvalidPermissionsError;
 
-			}),
-			deleteBoard: Effect.fn(function*(principal: Principal, id: string) {
+				const id = uuid.v4();
 
+				const data: BoardData = { tiles: Array.from({ length: 9}, () => null) };
+
+				yield* drizzle.use(async db => db.insert(boardTable).values({
+					team,
+					data,
+				}).onConflictDoNothing());
 			}),
-			getBoard: Effect.fn(function*(principal: Principal, id: string) {
-				
-				if(true)
+			deleteBoard: Effect.fn(function*(principal: Principal, team: TeamID) {
+				if(!principal.admin)
+					return yield* new InvalidPermissionsError;
+
+				yield* drizzle.use(async db => db.delete(boardTable).where(eq(boardTable.team, team)));
+			}),
+			getBoard: Effect.fn(function*(principal: Principal, team: TeamID) {
+				const rows = yield* drizzle.use(async db => db.select().from(boardTable).where(eq(boardTable.team, team)));
+
+				if(rows.length == 0)
 					return yield* new BoardNotFoundError;
 
-				return { team: "", tiles: [], id: "" } as Board;
-			}),
-			getBoardsByTeam: Effect.fn(function*(principal: Principal, team: TeamID) {
+				const row = rows[0];
 
-				return [] as string[];
-			})
+				return { team: row.team, data: row.data } as Board;
+			})/*,
+			getBoardsByTeam: Effect.fn(function*(principal: Principal, team: TeamID) {
+				const rows = yield* drizzle.use(async db => db.select().from(boardTable).where(eq(boardTable.team, team)));
+
+				return rows.map(row => row.id) as BoardID[];
+			})*/
 		};
 	})
 }) {};
