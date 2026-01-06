@@ -6,7 +6,7 @@
 	"scripts": {
 		"clean": "rimraf dist tsconfig.tsbuildinfo",
 		"build": "tsc --build && node ../../scripts/bundle-backend.mjs",
-		"check": "eslint src --config eslint.config.mjs",
+		"check": "eslint src --config ../../eslint.config.mjs",
 		"start": "node dist/index.js"
 	},
 	"dependencies": {
