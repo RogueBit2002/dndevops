@@ -48,7 +48,7 @@ COPY --from=builder /workspace/packages/app-game/drizzle.config.ts packages/app-
 
 COPY --from=builder /workspace/packages/app-events/dist packages/app-events/dist
 COPY --from=builder /workspace/packages/app-events/package.json packages/app-events/package.json
-COPY --from=builder /workspace/packages/app-events/drizzle packages/app-events/drizzle
-COPY --from=builder /workspace/packages/app-events/drizzle.config.ts packages/app-events/drizzle.config.ts
+# COPY --from=builder /workspace/packages/app-events/drizzle packages/app-events/drizzle
+# COPY --from=builder /workspace/packages/app-events/drizzle.config.ts packages/app-events/drizzle.config.ts
 
 CMD [ "/app/launcher.sh" ]
